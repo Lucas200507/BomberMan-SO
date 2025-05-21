@@ -1,3 +1,4 @@
+global alturaTela, larguraTela
 alturaTela = 920
 larguraTela = 1440
 FPSmenu = 5
@@ -20,4 +21,6 @@ VERMELHO = (255,0,0)
 AZUL = (0,0,255)
 VERDE = (0,255,0)
 BRANCO = (255,255,255)
-PRETO= (0,0,0)
+PRETO = (0,0,0)
+VERDE_ESCURO = (0,100,0)
+CINZA = (211,211,211)

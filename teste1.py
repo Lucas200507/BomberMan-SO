@@ -22,13 +22,46 @@ class Fases:
     def __init__(self, background, dificuldade, musica):
         self.background = background
         self.dificuldadeFase = dificuldade
-        self.musica = musica                
+        self.musica = musica  
+        self.musicaTocando = False              
 
     def mostrarFase(self):
         tela.fill(self.background)                
-        pygame.mixer.music.load(self.musica)
-        pygame.mixer_music.play(-1)
+       
+    def iniciarMusicaFase(self):
+        if not self.musicaTocando:
+             pygame.mixer.music.load(self.musica)
+             pygame.mixer_music.play(-1)
+             self.musicaTocando = True
         
+    def gerarBordas(self, larguraBlocks, alturaBlocks):
+        self.larguraBlocks = larguraBlocks
+        self.alturaBlocks = alturaBlocks                               
+        i = 1
+        # gerar as bordas                 
+        while i <= 4: 
+            # borda top
+            if i == 1:
+                x = 0
+                y = 0
+                pygame.draw.rect(tela, CINZA, (x, y, larguraTela, self.alturaBlocks))
+            # borda right
+            if i == 2:
+                x = larguraTela - self.larguraBlocks
+                y = 0
+                pygame.draw.rect(tela, CINZA, (x, y, self.larguraBlocks, alturaTela))
+            # borda left                
+            if i == 3:
+                x = 0
+                y = 0
+                pygame.draw.rect(tela, CINZA, (x, y, self.larguraBlocks, alturaTela))
+            # borda bottom                
+            if i == 4:
+                x = 0
+                y = alturaTela - self.larguraBlocks
+                pygame.draw.rect(tela, CINZA, (x, y, larguraTela, self.alturaBlocks))
+            i = i + 1           
+            
 
 class Menu:
     def __init__(self, musica, FPS):
@@ -90,7 +123,7 @@ def lerEvento(eventos):
         return  False
                 
 #instaciando
-fase1 = Fases(PRETO, 1, 'musica_jogatina.mp3')     
+fase1 = Fases(VERDE_ESCURO, 1, 'musica_jogatina.mp3')     
 menu = Menu('musica_telaInicial.mp3', FPSmenu)   
 
 #tela.fill(BRANCO) 
@@ -105,8 +138,7 @@ while rodar:
             exit()
             rodar = False   
              
-    if Rodandomenu:                  
-              
+    if Rodandomenu:                                
         if not menuMusicaTocando:
             # Agora a musica irá rodar apenas uma vez, quando verificar que o menu está rodando
             pygame.mixer.music.load(menu.musica)
@@ -118,10 +150,15 @@ while rodar:
         if lerEvento(eventos):
                 rodarFase1 = True
                 Rodandomenu = False
+                pygame.mixer.music.stop() # Pare a música do menu
+                menuMusicaTocando = False # Resete a flag do menu
+                fase1.iniciarMusicaFase() # Inicie a música da fase
+
                 
     elif rodarFase1:
         fase1.mostrarFase() 
-        rodarFase1 = False               
+        fase1.gerarBordas(30,30)
+                 
                 
     pygame.display.update()
     
