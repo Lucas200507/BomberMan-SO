@@ -60,7 +60,9 @@ class Fases:
                 x = 0
                 y = alturaTela - self.larguraBlocks
                 pygame.draw.rect(tela, CINZA, (x, y, larguraTela, self.alturaBlocks))
-            i = i + 1           
+            i = i + 1   
+            
+
             
 
 class Menu:
@@ -121,22 +123,59 @@ def lerEvento(eventos):
                 if event.key == K_r:                    
                    return True                
         return  False
-                
+
+class player:
+    def __init__(self, largura, altura, frame):
+        self.tamanhoPlayer = (largura, altura)        
+        self.framePlayer = frame
+        
+    def criarPlayer(self):       
+        self.playerImg = pygame.image.load(self.framePlayer)
+        self.playerRedimensionado = pygame.transform.scale(self.playerImg, self.tamanhoPlayer)
+        # self.playerDimens = self.playerRedimensionado.get_rect()
+        self.posX = 500
+        self.posY = 600
+            
+        eventosMov = pygame.event.get()
+        
+        for event in eventosMov:
+            if event.type == pygame.KEYDOWN:
+                if event.key == K_w:
+                    self.posY = self.posY - 1
+                elif event.key == k_d:
+                    self.posX = self.posX + 1
+                elif event.key == k_s:
+                    self.posY = self.posY + 1
+                elif event.key == k_a:
+                    self.posX = self.posX - 1
+        
+        tela.blit(self.playerRedimensionado, (self.posX, self.posY))
+        
+        
+    
+
+# 3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333                
 #instaciando
 fase1 = Fases(VERDE_ESCURO, 1, 'musica_jogatina.mp3')     
 menu = Menu('musica_telaInicial.mp3', FPSmenu)   
+p1 = player(30, 30, 'player_teste.png')
 
-#tela.fill(BRANCO) 
 
+
+# ############################################################################################################################
 while rodar:
     eventos = pygame.event.get()
-    for event in eventos:
-        
-        
+    for event in eventos:                
         if event.type == QUIT:
             pygame.quit()
             exit()
-            rodar = False   
+            rodar = False 
+# SAI DO JOGO CASO CLIQUE ESC  
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                exit()
+                rodar = False 
              
     if Rodandomenu:                                
         if not menuMusicaTocando:
@@ -151,13 +190,14 @@ while rodar:
                 rodarFase1 = True
                 Rodandomenu = False
                 pygame.mixer.music.stop() # Pare a música do menu
-                menuMusicaTocando = False # Resete a flag do menu
+                menuMusicaTocando = False # Resete a flag do menu                
                 fase1.iniciarMusicaFase() # Inicie a música da fase
 
                 
     elif rodarFase1:
         fase1.mostrarFase() 
         fase1.gerarBordas(30,30)
+        p1.criarPlayer()
                  
                 
     pygame.display.update()
