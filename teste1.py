@@ -18,187 +18,183 @@ rodarFase1 = False
 Rodandomenu = True
 menuMusicaTocando = False
 
+TAMANHO_BLOCO = 50
+
+mapa_jogo = [
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 0, 1, 2, 1, 1, 0, 1, 0, 1, 1, 1],
+ [1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+ [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]
+
+def criar_mapa():
+    linhas = len(mapa_jogo)
+    colunas = len(mapa_jogo[0])
+    
+    largura_mapa = colunas * TAMANHO_BLOCO
+    altura_mapa = linhas * TAMANHO_BLOCO
+
+    offset_x = (larguraTela - largura_mapa) // 2
+    offset_y = (alturaTela - altura_mapa) // 2
+
+    for linha in range(linhas):
+        for coluna in range(colunas):
+            y = linha * TAMANHO_BLOCO + offset_y
+            x = coluna * TAMANHO_BLOCO + offset_x
+
+            if mapa_jogo[linha][coluna] == 1:
+                pygame.draw.rect(tela, PRETO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
+            elif mapa_jogo[linha][coluna] == 2:
+                pygame.draw.rect(tela, BRANCO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
+            else:
+                pygame.draw.rect(tela, CINZA, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
+                pygame.draw.rect(tela, VERDE, (x + 5, y + 5, TAMANHO_BLOCO - 10, TAMANHO_BLOCO - 10))
+
 class Fases:
     def __init__(self, background, dificuldade, musica):
         self.background = background
         self.dificuldadeFase = dificuldade
-        self.musica = musica  
-        self.musicaTocando = False              
+        self.musica = musica
+        self.musicaTocando = False
 
     def mostrarFase(self):
-        tela.fill(self.background)                
-       
+        tela.fill(self.background)
+
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
-             pygame.mixer.music.load(self.musica)
-             pygame.mixer_music.play(-1)
-             self.musicaTocando = True
-        
+            pygame.mixer.music.load(self.musica)
+            pygame.mixer_music.play(-1)
+            self.musicaTocando = True
+
     def gerarBordas(self, larguraBlocks, alturaBlocks):
         self.larguraBlocks = larguraBlocks
-        self.alturaBlocks = alturaBlocks                               
+        self.alturaBlocks = alturaBlocks
         i = 1
-        # gerar as bordas                 
-        while i <= 4: 
-            # borda top
+        while i <= 4:
             if i == 1:
-                x = 0
-                y = 0
-                pygame.draw.rect(tela, CINZA, (x, y, larguraTela, self.alturaBlocks))
-            # borda right
+                pygame.draw.rect(tela, CINZA, (0, 0, larguraTela, self.alturaBlocks))
             if i == 2:
-                x = larguraTela - self.larguraBlocks
-                y = 0
-                pygame.draw.rect(tela, CINZA, (x, y, self.larguraBlocks, alturaTela))
-            # borda left                
+                pygame.draw.rect(tela, CINZA, (larguraTela - self.larguraBlocks, 0, self.larguraBlocks, alturaTela))
             if i == 3:
-                x = 0
-                y = 0
-                pygame.draw.rect(tela, CINZA, (x, y, self.larguraBlocks, alturaTela))
-            # borda bottom                
+                pygame.draw.rect(tela, CINZA, (0, 0, self.larguraBlocks, alturaTela))
             if i == 4:
-                x = 0
-                y = alturaTela - self.larguraBlocks
-                pygame.draw.rect(tela, CINZA, (x, y, larguraTela, self.alturaBlocks))
-            i = i + 1   
-            
-
-            
+                pygame.draw.rect(tela, CINZA, (0, alturaTela - self.larguraBlocks, larguraTela, self.alturaBlocks))
+            i = i + 1
 
 class Menu:
     def __init__(self, musica, FPS):
         self.musica = musica
         self.fps = FPS
-        
         self.clock = pygame.time.Clock()
-        
-        # variaveis para rotacionar a logo
         self.angulo = 0
-        self.direcao_rotacao = 1  # 1 para direita, -1 para a esquerda
+        self.direcao_rotacao = 1
         self.velRotacaoLogo = 2
         self.amplitude_rotacaoLogo = 5
-        self.frequencia_rotacaoLogo = 0.05
-        
+
     def mostrarMenu(self):
         tela.fill(BRANCO)
         self.clock.tick(self.fps)
-        #Colocando a logo na tela
         self.logo = pygame.image.load(MenuLogo)
-        self.logoRedimensionado = pygame.transform.scale(self.logo, tamanhoLogo)                                                       
-        
-        #Rotacionar a Logo na tela        
-        self.angulo += self.velRotacaoLogo * self.direcao_rotacao
+        self.logoRedimensionado = pygame.transform.scale(self.logo, tamanhoLogo)
 
-        if(self.angulo > self.amplitude_rotacaoLogo):
-             self.angulo = self.amplitude_rotacaoLogo
-             self.direcao_rotacao = -1
+        self.angulo += self.velRotacaoLogo * self.direcao_rotacao
+        if self.angulo > self.amplitude_rotacaoLogo:
+            self.angulo = self.amplitude_rotacaoLogo
+            self.direcao_rotacao = -1
         elif self.angulo < -self.amplitude_rotacaoLogo:
-             self.angulo = -self.amplitude_rotacaoLogo
-             self.direcao_rotacao = 1
-                          
-        self.logoRotacionado = pygame.transform.rotate(self.logoRedimensionado, self.angulo)             
+            self.angulo = -self.amplitude_rotacaoLogo
+            self.direcao_rotacao = 1
+
+        self.logoRotacionado = pygame.transform.rotate(self.logoRedimensionado, self.angulo)
         self.Dimens_logoRotacionado = self.logoRotacionado.get_rect()
         largura_logoRotacionado = self.Dimens_logoRotacionado[2]
-        altura_logoRotacionado = self.Dimens_logoRotacionado[3]   
+        altura_logoRotacionado = self.Dimens_logoRotacionado[3]
         self.posX_logoRotacionado = ((larguraTela // 2) - (largura_logoRotacionado // 2))
-        self.posY_logoRotacionado = ((alturaTela // 2) - (altura_logoRotacionado // 2) - 100)                     
+        self.posY_logoRotacionado = ((alturaTela // 2) - (altura_logoRotacionado // 2) - 100)
         tela.blit(self.logoRotacionado, (self.posX_logoRotacionado, self.posY_logoRotacionado))
-        
-        
-    
-        # CRIANDO O TEXTO NA TELA
+
         self.fontPressR = pygame.font.SysFont(TPressR_FontFamily, TPressR_Syze, TPressR_Bold, TPressR_Italic)
         self.TextPressR = 'Pressione R para iniciar a fase'
         self.FormatacaoTextPressR = self.fontPressR.render(self.TextPressR, False, PRETO)
         self.DimensoesTextPressR = self.FormatacaoTextPressR.get_rect()
-        self.larguraTextPressR = self.DimensoesTextPressR[2]
-        self.alturaTextPressR = self.DimensoesTextPressR[3]
-        self.PosX_TextPressR = (larguraTela // 2)  - (self.larguraTextPressR // 2)
+        self.PosX_TextPressR = (larguraTela // 2) - (self.DimensoesTextPressR[2] // 2)
         self.PosY_TextPressR = 700
-        tela.blit(self.FormatacaoTextPressR, (self.PosX_TextPressR, self.PosY_TextPressR))                                                                       
-                
-def lerEvento(eventos):           
-        for event in eventos:
-            if event.type == KEYDOWN:
-                if event.key == K_r:                    
-                   return True                
-        return  False
+        tela.blit(self.FormatacaoTextPressR, (self.PosX_TextPressR, self.PosY_TextPressR))
+
+def lerEvento(eventos):
+    for event in eventos:
+        if event.type == KEYDOWN:
+            if event.key == K_r:
+                return True
+    return False
 
 class player:
     def __init__(self, largura, altura, frame):
-        self.tamanhoPlayer = (largura, altura)        
+        self.tamanhoPlayer = (largura, altura)
         self.framePlayer = frame
-        
-    def criarPlayer(self):       
-        self.playerImg = pygame.image.load(self.framePlayer)
-        self.playerRedimensionado = pygame.transform.scale(self.playerImg, self.tamanhoPlayer)
-        # self.playerDimens = self.playerRedimensionado.get_rect()
         self.posX = 500
         self.posY = 600
-            
-        eventosMov = pygame.event.get()
-        
-        for event in eventosMov:
-            if event.type == pygame.KEYDOWN:
-                if event.key == K_w:
-                    self.posY = self.posY - 1
-                elif event.key == k_d:
-                    self.posX = self.posX + 1
-                elif event.key == k_s:
-                    self.posY = self.posY + 1
-                elif event.key == k_a:
-                    self.posX = self.posX - 1
-        
-        tela.blit(self.playerRedimensionado, (self.posX, self.posY))
-        
-        
-    
 
-# 3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333                
-#instaciando
-fase1 = Fases(VERDE_ESCURO, 1, 'musica_jogatina.mp3')     
-menu = Menu('musica_telaInicial.mp3', FPSmenu)   
+    def criarPlayer(self):
+        self.playerImg = pygame.image.load(self.framePlayer)
+        self.playerRedimensionado = pygame.transform.scale(self.playerImg, self.tamanhoPlayer)
+        eventosMov = pygame.event.get()
+        if not hasattr(self, 'posX'):
+            self.posX = 500
+            self.posY = 600
+
+        # Movimentação do player
+        velocidade = 0.5  # Define a velocidade do movimento
+        teclas = pygame.key.get_pressed()
+        if teclas[pygame.K_LEFT]:
+            self.posX -= velocidade
+        if teclas[pygame.K_RIGHT]:
+            self.posX += velocidade
+        if teclas[pygame.K_UP]:
+            self.posY -= velocidade
+        if teclas[pygame.K_DOWN]:
+            self.posY += velocidade
+        tela.blit(self.playerRedimensionado, (self.posX, self.posY))
+
+fase1 = Fases(VERDE_ESCURO, 1, 'musica_jogatina.mp3')
+menu = Menu('musica_telaInicial.mp3', FPSmenu)
 p1 = player(30, 30, 'player_teste.png')
 
-
-
-# ############################################################################################################################
 while rodar:
     eventos = pygame.event.get()
-    for event in eventos:                
-        if event.type == QUIT:
+    for event in eventos:
+        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
             pygame.quit()
             exit()
-            rodar = False 
-# SAI DO JOGO CASO CLIQUE ESC  
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                exit()
-                rodar = False 
-             
-    if Rodandomenu:                                
-        if not menuMusicaTocando:
-            # Agora a musica irá rodar apenas uma vez, quando verificar que o menu está rodando
-            pygame.mixer.music.load(menu.musica)
-            pygame.mixer_music.play(-1) 
-            menuMusicaTocando = True
-        menu.mostrarMenu()  
-            
-                              
-        if lerEvento(eventos):
-                rodarFase1 = True
-                Rodandomenu = False
-                pygame.mixer.music.stop() # Pare a música do menu
-                menuMusicaTocando = False # Resete a flag do menu                
-                fase1.iniciarMusicaFase() # Inicie a música da fase
+            rodar = False
 
-                
+    if Rodandomenu:
+        if not menuMusicaTocando:
+            pygame.mixer.music.load(menu.musica)
+            pygame.mixer_music.play(-1)
+            menuMusicaTocando = True
+        menu.mostrarMenu()
+        if lerEvento(eventos):
+            rodarFase1 = True
+            Rodandomenu = False
+            pygame.mixer.music.stop()
+            menuMusicaTocando = False
+            fase1.iniciarMusicaFase()
+
     elif rodarFase1:
-        fase1.mostrarFase() 
-        fase1.gerarBordas(30,30)
+        fase1.mostrarFase()
+        fase1.gerarBordas(30, 30)
+        criar_mapa()
         p1.criarPlayer()
-                 
-                
+
     pygame.display.update()
-    
