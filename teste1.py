@@ -133,24 +133,23 @@ class player:
         self.playerImg = pygame.image.load(self.framePlayer)
         self.playerRedimensionado = pygame.transform.scale(self.playerImg, self.tamanhoPlayer)
         # self.playerDimens = self.playerRedimensionado.get_rect()
-        self.posX = 500
-        self.posY = 600
-            
-        eventosMov = pygame.event.get()
-        
-        for event in eventosMov:
-            if event.type == pygame.KEYDOWN:
-                if event.key == K_w:
-                    self.posY = self.posY - 1
-                elif event.key == k_d:
-                    self.posX = self.posX + 1
-                elif event.key == k_s:
-                    self.posY = self.posY + 1
-                elif event.key == k_a:
-                    self.posX = self.posX - 1
-        
-        tela.blit(self.playerRedimensionado, (self.posX, self.posY))
-        
+        if not hasattr(self, 'posX'):
+            self.posX = 500
+            self.posY = 600
+
+        # Movimentação do player
+        velocidade = 0.5  # Define a velocidade do movimento
+        teclas = pygame.key.get_pressed()
+        if teclas[pygame.K_LEFT]:
+            self.posX -= velocidade
+        if teclas[pygame.K_RIGHT]:
+            self.posX += velocidade
+        if teclas[pygame.K_UP]:
+            self.posY -= velocidade
+        if teclas[pygame.K_DOWN]:
+            self.posY += velocidade
+
+        tela.blit(self.playerRedimensionado, (self.posX, self.posY))        
         
     
 
