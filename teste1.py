@@ -58,14 +58,7 @@ class Fases:
                     # sobrepondo retangulos
                     pygame.draw.rect(tela, CINZA_ESCURO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO)) # borda
                     pygame.draw.rect(tela, CINZA, (x + 5, y + 5, TAMANHO_BLOCO - 10, TAMANHO_BLOCO - 10)) # centro
-class Blocos:
-    def __init__(self):
-        #verificando quantidades de blocos no mapa no total
-        self.linhas = 221 
-        self.colunas = 221
-        self.tamanho = TAMANHO_BLOCO
-                  
-
+                    
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
             pygame.mixer.music.load(self.musica)
@@ -86,7 +79,9 @@ class Blocos:
             if i == 4:
                 pygame.draw.rect(tela, CINZA, (0, alturaTela - self.larguraBlocks, larguraTela, self.alturaBlocks))
             i = i + 1
-            
+
+                  
+
       
 
 class Menu:
@@ -154,9 +149,7 @@ class player:
         # Movimentação do player
           # Define a velocidade do movimento
         teclas = pygame.key.get_pressed()
-        if teclas[pygame.K_LEFT]:
-            if self.posX.coliderect(blocoIndestrutivel):
-                self.posX = 0
+        if teclas[pygame.K_LEFT]:           
             self.posX -= velocidadePlayer
         if teclas[pygame.K_RIGHT]:
             self.posX += velocidadePlayer
