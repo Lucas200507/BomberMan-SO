@@ -18,57 +18,53 @@ rodarFase1 = False
 Rodandomenu = True
 menuMusicaTocando = False
 
-TAMANHO_BLOCO = 50
-
-mapa_jogo = [
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 0, 1, 2, 1, 1, 0, 1, 0, 1, 1, 1],
- [1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
- [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-]
-
-def criar_mapa():
-    linhas = len(mapa_jogo)
-    colunas = len(mapa_jogo[0])
-    
-    largura_mapa = colunas * TAMANHO_BLOCO
-    altura_mapa = linhas * TAMANHO_BLOCO
-
-    offset_x = (larguraTela - largura_mapa) // 2
-    offset_y = (alturaTela - altura_mapa) // 2
-
-    for linha in range(linhas):
-        for coluna in range(colunas):
-            y = linha * TAMANHO_BLOCO + offset_y
-            x = coluna * TAMANHO_BLOCO + offset_x
-
-            if mapa_jogo[linha][coluna] == 1:
-                pygame.draw.rect(tela, PRETO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
-            elif mapa_jogo[linha][coluna] == 2:
-                pygame.draw.rect(tela, BRANCO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
-            else:
-                pygame.draw.rect(tela, CINZA, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
-                pygame.draw.rect(tela, VERDE, (x + 5, y + 5, TAMANHO_BLOCO - 10, TAMANHO_BLOCO - 10))
-
 class Fases:
     def __init__(self, background, dificuldade, musica):
         self.background = background
         self.dificuldadeFase = dificuldade
         self.musica = musica
         self.musicaTocando = False
-
-    def mostrarFase(self):
+        self.clock = pygame.time.Clock()
+        self.clock.tick(FPSfases)
+                       
+    def mostrarFase(self):            
         tela.fill(self.background)
+        
+    def criar_mapa(self):             
+        linhas = len(mapa_jogo) # todos os vetores, 13 
+        colunas = len(mapa_jogo[0]) # quantidades de elementos de cada vetor, 17
+        
+        largura_mapa = colunas * TAMANHO_BLOCO
+        altura_mapa = linhas * TAMANHO_BLOCO
+        # centralizando x e y
+        offset_x = (larguraTela - largura_mapa) // 2 
+        offset_y = (alturaTela - altura_mapa) // 2
+        
+        # 3 == BLOCO INDESTRUTÍVEL    
+        # 1 == NULL
+        # 2 == MADEIRA (DESTRUTÍVEL)
+        for linha in range(linhas):            
+            for coluna in range(colunas):
+                y = linha * TAMANHO_BLOCO + offset_y
+                x = coluna * TAMANHO_BLOCO + offset_x
+                # caso a posição da matriz seja 1, pinte de preto sem bordas
+                if mapa_jogo[linha][coluna] == 1:
+                    pygame.draw.rect(tela, VERDE_ESCURO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
+                # caso a posição da matriz seja 2, pinte de branco o bloco, sem bordas
+                elif mapa_jogo[linha][coluna] == 2:
+                    pygame.draw.rect(tela, BRANCO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO))
+                elif mapa_jogo[linha][coluna] == 3:
+                    blocoIndestrutivel = [mapa_jogo[linha][coluna]]
+                    # sobrepondo retangulos
+                    pygame.draw.rect(tela, CINZA_ESCURO, (x, y, TAMANHO_BLOCO, TAMANHO_BLOCO)) # borda
+                    pygame.draw.rect(tela, CINZA, (x + 5, y + 5, TAMANHO_BLOCO - 10, TAMANHO_BLOCO - 10)) # centro
+class Blocos:
+    def __init__(self):
+        #verificando quantidades de blocos no mapa no total
+        self.linhas = 221 
+        self.colunas = 221
+        self.tamanho = TAMANHO_BLOCO
+                  
 
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
@@ -90,6 +86,8 @@ class Fases:
             if i == 4:
                 pygame.draw.rect(tela, CINZA, (0, alturaTela - self.larguraBlocks, larguraTela, self.alturaBlocks))
             i = i + 1
+            
+      
 
 class Menu:
     def __init__(self, musica, FPS):
@@ -154,21 +152,23 @@ class player:
             self.posY = 600
 
         # Movimentação do player
-        velocidade = 0.5  # Define a velocidade do movimento
+          # Define a velocidade do movimento
         teclas = pygame.key.get_pressed()
         if teclas[pygame.K_LEFT]:
-            self.posX -= velocidade
+            if self.posX.coliderect(blocoIndestrutivel):
+                self.posX = 0
+            self.posX -= velocidadePlayer
         if teclas[pygame.K_RIGHT]:
-            self.posX += velocidade
+            self.posX += velocidadePlayer
         if teclas[pygame.K_UP]:
-            self.posY -= velocidade
+            self.posY -= velocidadePlayer
         if teclas[pygame.K_DOWN]:
-            self.posY += velocidade
+            self.posY += velocidadePlayer
         tela.blit(self.playerRedimensionado, (self.posX, self.posY))
 
 fase1 = Fases(VERDE_ESCURO, 1, 'musica_jogatina.mp3')
 menu = Menu('musica_telaInicial.mp3', FPSmenu)
-p1 = player(30, 30, 'player_teste.png')
+p1 = player(66, 66, 'player_teste.png')
 
 while rodar:
     eventos = pygame.event.get()
@@ -178,7 +178,7 @@ while rodar:
             exit()
             rodar = False
 
-    if Rodandomenu:
+    if Rodandomenu:        
         if not menuMusicaTocando:
             pygame.mixer.music.load(menu.musica)
             pygame.mixer_music.play(-1)
@@ -189,12 +189,13 @@ while rodar:
             Rodandomenu = False
             pygame.mixer.music.stop()
             menuMusicaTocando = False
-            fase1.iniciarMusicaFase()
-
-    elif rodarFase1:
+            fase1.iniciarMusicaFase()  
+               
+    elif rodarFase1:                     
         fase1.mostrarFase()
-        fase1.gerarBordas(30, 30)
-        criar_mapa()
+        fase1.gerarBordas(65, 65)
+        fase1.criar_mapa()
         p1.criarPlayer()
+        
 
     pygame.display.update()
