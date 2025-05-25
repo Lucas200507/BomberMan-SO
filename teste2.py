@@ -85,11 +85,11 @@ class Mapa:
         for y, linha in enumerate(layout):
             for x, valor in enumerate(linha):
                 if valor == 3:
-                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "Bloco_indestrutivel.png"))
+                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "imagens/Bloco_indestrutivel.png"))
                 elif valor == 2:
-                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "tijolos.png")) 
+                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "imagens/tijolos.png")) 
                 elif valor == 4:
-                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "Bloco_Indestrutivel2.png")) 
+                    self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco, "imagens/Bloco_Indestrutivel2.png")) 
 
     def desenhar(self, tela):
         for bloco in self.blocos:
@@ -133,7 +133,7 @@ class Fases:
         tela.fill(cor_fundo)
         self.mapa_layout = mapa
         self.mapa = Mapa(self.mapa_layout, 66)
-        self.player = Player(70, 70, 48, 'player_teste.png')
+        self.player = Player(70, 70, 55, 'imagens/robo_parado1.png')
         self.musicaTocando = False
         self.musica = musica
         
@@ -152,8 +152,8 @@ class Fases:
         self.player.desenhar(tela)        
         
 # ===================================================
-menu = Menu(BRANCO, 'logoBao.png', 'Clique ENTER para iniciar o jogo', 'musica_telaInicial.mp3')
-fase1 = Fases(mapa1, cor_fundoFase, 'musica_jogatina.mp3')
+menu = Menu(BRANCO, 'imagens/logoBao.png', 'Clique ENTER para iniciar o jogo', 'sons/musica_telaInicial.mp3')
+fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
 
 estado = "menu"
 menuMusicaTocando = False
