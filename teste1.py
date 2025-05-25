@@ -34,15 +34,31 @@ class Fases:
         linhas = len(mapa_jogo) # todos os vetores, 13 
         colunas = len(mapa_jogo[0]) # quantidades de elementos de cada vetor, 17
         
+        TAMANHO_BLOCO = 66
         largura_mapa = colunas * TAMANHO_BLOCO
         altura_mapa = linhas * TAMANHO_BLOCO
         # centralizando x e y
         offset_x = (larguraTela - largura_mapa) // 2 
         offset_y = (alturaTela - altura_mapa) // 2
-        
-        # 3 == BLOCO INDESTRUTÍVEL    
-        # 1 == NULL
-        # 2 == MADEIRA (DESTRUTÍVEL)
+        # 0 = quadrado com borda
+        # 1 = NULL
+        # 2 = quadrado sem borda
+        # 3 = bloco indestrutível
+        mapa_jogo = [
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+        ]
         for linha in range(linhas):            
             for coluna in range(colunas):
                 y = linha * TAMANHO_BLOCO + offset_y
@@ -96,7 +112,7 @@ class Menu:
 
     def mostrarMenu(self):
         tela.fill(BRANCO)
-        self.clock.tick(self.fps)
+        self.clock.tick(self.fps)        
         self.logo = pygame.image.load(MenuLogo)
         self.logoRedimensionado = pygame.transform.scale(self.logo, tamanhoLogo)
 
