@@ -12,15 +12,15 @@ mapa1 = [
         [4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4],
         [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
         [4, 1, 3, 1, 3, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 2, 4],
-        [4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-        [4, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 4],
+        [4, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 1, 1, 4],
+        [4, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 4],
         [4, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-        [4, 1, 3, 1, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 2, 4],
-        [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-        [4, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 4],
-        [4, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 4],
-        [4, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 4],
-        [4, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],       
+        [4, 2, 3, 1, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 2, 4],
+        [4, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
+        [4, 1, 3, 1, 3, 1, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 4],
+        [4, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 1, 4],
+        [4, 2, 3, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 1, 3, 1, 4],
+        [4, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4],       
         [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
 ]
 pygame.init()
@@ -34,6 +34,12 @@ altura = 861
 
 pygame.display.set_caption('TESTE2')
 tela = pygame.display.set_mode((largura, altura))
+global velociadade_player, tamanho_blocos, tamanho_player, posXInicial, posYInicial
+velocidade_player = 4
+tamanho_bloco = 66
+tamanho_player = 60
+posXInicial = 75
+posYInicial = 70
 
 
 class Menu:
@@ -101,8 +107,12 @@ class Player:
         self.player = pygame.Rect(x, y, tamanho, tamanho)
          # Carrega e redimensiona a imagem
         self.playerImg = pygame.image.load(frame)
-        self.playerRedimensionado = pygame.transform.scale(self.playerImg, (tamanho, tamanho))
-        self.velocidade = 5
+        self.playerRedimensionado = pygame.transform.scale(self.playerImg, (tamanho - 5, tamanho))
+        self.velocidade = velocidade_player
+        
+        # rect que colide (metade de baixo)
+        self.metadePlayer = pygame.Rect(x, y + (tamanho // 2), tamanho - 5, tamanho // 2)
+        
         
         
     def mover(self, teclas, blocos):               
@@ -117,23 +127,33 @@ class Player:
             mover_y = self.velocidade
             
         self.player.x += mover_x
+        self.atualizar_metadePlayer()
         if self.colidiu(blocos): self.player.x -= mover_x
         
         self.player.y += mover_y
+        self.atualizar_metadePlayer()
         if self.colidiu(blocos): self.player.y -= mover_y
         
+        # Atualiza a metade final após os dois movimentos
+        self.atualizar_metadePlayer()
+        
+    def atualizar_metadePlayer(self):
+        self.metadePlayer.x = self.player.x
+        self.metadePlayer.y = self.player.y + (self.player.height // 2)
+        
     def colidiu(self, blocos):
-        return any(self.player.colliderect(b.block) for b in blocos)
+        return any(self.metadePlayer.colliderect(b.block) for b in blocos)
     
     def desenhar(self, tela):
+        # não á necessidade de imprimir a metade do player 
         tela.blit(self.playerRedimensionado, self.player.topleft)
          
 class Fases:
     def __init__(self, mapa, cor_fundo, musica):
         tela.fill(cor_fundo)
         self.mapa_layout = mapa
-        self.mapa = Mapa(self.mapa_layout, 66)
-        self.player = Player(70, 70, 55, 'imagens/robo_parado1.png')
+        self.mapa = Mapa(self.mapa_layout, tamanho_bloco)
+        self.player = Player(posXInicial, posYInicial, tamanho_player, 'imagens/robo_parado1.png')
         self.musicaTocando = False
         self.musica = musica
         
