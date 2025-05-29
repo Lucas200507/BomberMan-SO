@@ -1,6 +1,7 @@
 import pygame
 import random
 from pygame.locals import *
+import time
 from sys import exit
 
 # Cores
@@ -28,22 +29,23 @@ mapa1 = [
 
 pygame.init()
 
-FPS = 50
+FPS = 30
 relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
 
-largura = 1350
-altura = 1000
+largura = 1250
+altura = 850
 
 pygame.display.set_caption('TESTE2')
 tela = pygame.display.set_mode((largura, altura))
 
-velocidade_player = 4
-tamanho_bloco = 80
+velocidade_player = 15
+tamanho_bloco = 75
 altura_player = 98
 largura_player = 64
-posXInicial = 88
-posYInicial = 80
+posXInicial = 78
+posYInicial = 70
+delay_framePlayer = 0.07
 
 
 class Menu:
@@ -124,6 +126,7 @@ class Player:
 
     def mover(self, teclas, blocos):
         mover_x, mover_y = 0, 0      
+        self.delay = delay_framePlayer
         if teclas[pygame.K_LEFT]:
             mover_x -= self.velocidade            
             self.x_sprites += 1
@@ -134,7 +137,7 @@ class Player:
             mover_x = self.velocidade
             self.x_sprites += 1
             self.y_sprites = 0
-            if self.x_sprites > 5:
+            if self.x_sprites > 3:
                 self.x_sprites = 0   
         if teclas[pygame.K_UP]:
             mover_y = -self.velocidade
@@ -159,7 +162,7 @@ class Player:
                 if self.x_sprites > 1:
                     self.x_sprites = 5
                     self.y_sprites = 0  
-
+        time.sleep(self.delay)
         self.player.x += mover_x
         self.atualizar_metadePlayer()
         if self.colidiu(blocos):
