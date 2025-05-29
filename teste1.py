@@ -189,8 +189,8 @@ while rodar:
 
     if Rodandomenu:        
         if not menuMusicaTocando:
-            pygame.mixer.music.load(menu.musica)
-            pygame.mixer_music.play(-1)
+            #pygame.mixer.music.load(menu.musica)
+            #pygame.mixer_music.play(-1)
             menuMusicaTocando = True
         menu.mostrarMenu()
         if lerEvento(eventos):
