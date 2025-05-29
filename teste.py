@@ -28,21 +28,22 @@ mapa1 = [
 
 pygame.init()
 
-FPS = 60
+FPS = 50
 relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
 
-largura = 1123
-altura = 861
+largura = 1350
+altura = 1000
 
 pygame.display.set_caption('TESTE2')
 tela = pygame.display.set_mode((largura, altura))
 
 velocidade_player = 4
-tamanho_bloco = 66
-tamanho_player = 60
-posXInicial = 75
-posYInicial = 70
+tamanho_bloco = 80
+altura_player = 98
+largura_player = 64
+posXInicial = 88
+posYInicial = 80
 
 
 class Menu:
@@ -107,23 +108,57 @@ class Mapa:
 
 
 class Player:
-    def __init__(self, x, y, tamanho, frame):
-        self.player = pygame.Rect(x, y, tamanho, tamanho)
-        self.playerImg = pygame.image.load(frame)
-        self.playerRedimensionado = pygame.transform.scale(self.playerImg, (tamanho - 5, tamanho))
+    def __init__(self, x, y, largura, altura, frame):
+        #self.player = pygame.Rect(x, y, tamanho, tamanho)
+        #self.playerImg = pygame.image.load(frame)
+        #self.playerRedimensionado = pygame.transform.scale(self.playerImg, (tamanho - 5, tamanho))
+        self.sprites = pygame.image.load(frame)
+#        self.sprites = pygame.transform.scale(self.sprites, (512-50, 512-50))
+        self.player = pygame.Rect(x, y, largura, altura)    
+        # PARA RECORTAR O FRAME
+        self.x_sprites = 0
+        self.y_sprites = 0
+                
         self.velocidade = velocidade_player
-        self.metadePlayer = pygame.Rect(x, y + (tamanho // 2), tamanho - 5, tamanho // 2)
+        self.metadePlayer = pygame.Rect(x, y + (altura // 2), largura - 5, altura // 2)
 
     def mover(self, teclas, blocos):
-        mover_x, mover_y = 0, 0
+        mover_x, mover_y = 0, 0      
         if teclas[pygame.K_LEFT]:
-            mover_x = -self.velocidade
+            mover_x -= self.velocidade            
+            self.x_sprites += 1
+            self.y_sprites = 1
+            if self.x_sprites > 6:
+                self.x_sprites = 2 
         elif teclas[pygame.K_RIGHT]:
             mover_x = self.velocidade
+            self.x_sprites += 1
+            self.y_sprites = 0
+            if self.x_sprites > 5:
+                self.x_sprites = 0   
         if teclas[pygame.K_UP]:
             mover_y = -self.velocidade
+            self.x_sprites += 1          
+            if self.x_sprites > 7:
+                self.y_sprites = 2 
+                self.x_sprites = 0
+            elif self.x_sprites > 3:                                               
+                    self.y_sprites = 1
+                    self.x_sprites = 7 
+            else:
+                self.y_sprites = 2        
         elif teclas[pygame.K_DOWN]:
             mover_y = self.velocidade
+            self.x_sprites += 1          
+            if self.x_sprites < 7 and self.x_sprites > 4:
+                self.y_sprites = 0  
+            else:     
+                if self.x_sprites > 6:
+                    self.x_sprites = 0                           
+                    self.y_sprites = 1
+                if self.x_sprites > 1:
+                    self.x_sprites = 5
+                    self.y_sprites = 0  
 
         self.player.x += mover_x
         self.atualizar_metadePlayer()
@@ -145,7 +180,8 @@ class Player:
         return any(self.metadePlayer.colliderect(b.block) for b in blocos)
 
     def desenhar(self, tela):
-        tela.blit(self.playerRedimensionado, self.player.topleft)
+         tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))
+       # tela.blit(self.playerRedimensionado, self.player.topleft)
 
 
 class Inimigo:
@@ -214,7 +250,7 @@ class Fases:
     def __init__(self, mapa, cor_fundo, musica):
         self.mapa_layout = mapa
         self.mapa = Mapa(self.mapa_layout, tamanho_bloco)
-        self.player = Player(posXInicial, posYInicial, tamanho_player, 'imagens/robo_parado1.png')
+        self.player = Player(posXInicial, posYInicial, largura_player, altura_player, 'imagens/Sprites_player.png')
         self.musicaTocando = False
         self.musica = musica
         self.cor_fundo = cor_fundo
