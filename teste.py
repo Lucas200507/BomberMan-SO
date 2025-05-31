@@ -30,6 +30,11 @@ mapa1 = [
 
 pygame.init()
 
+# SPRITES TIJOLOS = 192 x 64
+# TAMANHO DE CADA SPRITE = 64 x 64
+#           --- TOGLEFT ---
+# SPRITE[0] = 0*64 x 0 | SPRITE[1] = 1*6
+
 FPS = 30
 relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
