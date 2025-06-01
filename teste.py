@@ -12,6 +12,8 @@ VERMELHO = (25, 0, 0)
 VERDE_ESCURO = (0, 100, 0)
 cor_fundoFase = VERDE_ESCURO
 
+limite_bombas = threading.Semaphore(3)
+
 mapa1 = [
     [4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4],
     [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
@@ -42,7 +44,7 @@ pygame.mixer.music.set_volume(0.5)
 largura = 1250
 altura = 960
 
-pygame.display.set_caption('TESTE2')
+pygame.display.set_caption('TESTE')
 tela = pygame.display.set_mode((largura, altura))
 
 velocidade_player = 15
@@ -116,14 +118,10 @@ class Mapa:
 
 
 class Player:
-    def __init__(self, x, y, largura, altura, frame):
-        #self.player = pygame.Rect(x, y, tamanho, tamanho)
-        #self.playerImg = pygame.image.load(frame)
-        #self.playerRedimensionado = pygame.transform.scale(self.playerImg, (tamanho - 5, tamanho))
+    def __init__(self, x, y, largura, altura, frame):        
         self.sprites = pygame.image.load(frame)
-#        self.sprites = pygame.transform.scale(self.sprites, (512-50, 512-50))
         self.player = pygame.Rect(x, y, largura, altura)    
-        # PARA RECORTAR O FRAME
+        # PARA RECORTAR O FRAME PLAYER
         self.x_sprites = 0
         self.y_sprites = 0
                 
@@ -189,9 +187,7 @@ class Player:
         return any(self.metadePlayer.colliderect(b.block) for b in blocos)
 
     def desenhar(self, tela):
-         tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))
-       # tela.blit(self.playerRedimensionado, self.player.topleft)
-
+         tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))       
 
 class Inimigo:
     def __init__(self, x, y, velocidade=0.1):
@@ -255,52 +251,55 @@ class Inimigo:
     def desenhar(self, tela):
         tela.blit(self.imagem, (self.x * self.tamanho, self.y * self.tamanho))
         
-# class Bomb:
-#     # Atribuindo imagens da bomba e explosões    
-#     bomb_img = pygame.image.load("imagens/bomba.png")
-#     bomb_img = pygame.transform.scale(bomb_img, (tamanho_bloco, tamanho_bloco)) 
-#     explosion_img = pygame.image.load("imagens/explosion.png")
-#     explosion_img = pygame.transform.scale(explosion_img, (tamanho_bloco, tamanho_bloco))
+class Bomb:
+    # Atribuindo imagens da bomba e explosões    
+    bomb_img = pygame.image.load("imagens/bomba.png")
+    bomb_img = pygame.transform.scale(bomb_img, (tamanho_bloco, tamanho_bloco)) 
+    explosion_img = pygame.image.load("imagens/explosion.png")
+    explosion_img = pygame.transform.scale(explosion_img, (tamanho_bloco, tamanho_bloco))
     
-#     def __init__(self, x, y, fase):                
-#         self.delay_bomba = 3
-#         self.posX_bomba = x
-#         self.posY_bomba = y
-#         self.fase = fase
-#         self.explosoes = []
-#     def explodir(self):
-#         time.sleep(self.delay_bomba)
-#         self.explosoes.append((self.posX_bomba, self.posY_bomba))
+    def __init__(self, x, y, fase):                
+        self.delay_bomba = 3
+        self.posX_bomba = x
+        self.posY_bomba = y
+        self.fase = fase
+        self.explosoes = []
+        threading.Thread(target=self.explodir, daemon=True).start()
         
-#         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0,1)]:
-#             nx, ny = self.posX_bomba + dx, self.posY_bomba + dy            
-#             if 0 <= ny < len(self.fase.mapa_layout) and 0 <= nx < len(self.fase.mapa_layout[0]):
-#                 tile = self.fase.mapa_layout[ny][nx]
-#                 if tile == 2:
-#                     self.fase.mapa_layout[ny][nx] = 1
-#                 elif tile in (3, 4):
-#                     continue
-#                 self.explosoes.append((nx, ny))
+    def explodir(self):
+        time.sleep(self.delay_bomba)
+        self.explosoes.append((self.posX_bomba, self.posY_bomba))
+        
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0,1)]:
+            # imprimir a explosão na tela
+            nx, ny = self.posX_bomba + dx, self.posY_bomba + dy           
+            if 0 <= ny < len(self.fase.mapa_layout) and 0 <= nx < len(self.fase.mapa_layout[0]):
+                tile = self.fase.mapa_layout[ny][nx]
+                if tile == 2:
+                    self.fase.mapa_layout[ny][nx] = 1
+                elif tile in (3, 4):
+                    continue
+                self.explosoes.append((nx, ny))
                 
-#         jogador_x = self.fase.player.player.x // tamanho_bloco
-#         jogador_y = self.fase.player.player.y // tamanho_bloco
+        jogador_x = self.fase.player.player.x // tamanho_bloco
+        jogador_y = self.fase.player.player.y // tamanho_bloco
         
-#         if (jogador_x, jogador_y) in self.explosoes:
-#             print("💥 Jogador atingido!")
-#             self.fase.player.player.x = posXInicial
-#             self.fase.player.player.y = posYInicial
+        if (jogador_x, jogador_y) in self.explosoes:
+            print("💥 Jogador atingido!")
+            self.fase.player.player.x = posXInicial
+            self.fase.player.player.y = posYInicial
 
-#         for inimigo in self.fase.inimigos:
-#             if (inimigo.x, inimigo.y) in self.explosoes:
-#                 inimigo.vivo = False
-#                 print(f"Inimigo eliminado: {inimigo}")
+        for inimigo in self.fase.inimigos:
+            if (inimigo.x, inimigo.y) in self.explosoes:
+                inimigo.vivo = False
+                print(f"Inimigo eliminado: {inimigo}")
 
-#         # for blocos in self.fase.blocos:
-#         #     if(blocos.valor == 2) in self.explosoes:
-#         #         blocos.
+        # for blocos in self.fase.blocos:
+        #     if(blocos.valor == 2) in self.explosoes:
+        #         blocos.
 
-#         time.sleep(0.5)
-#         self.fase.bombas.remove(self)                
+        time.sleep(0.5)
+        self.fase.bombas.remove(self)                
         
 
 class Fases:
@@ -316,7 +315,7 @@ class Fases:
             Inimigo(5, 7),
             Inimigo(10, 5),
         ]
-        #self.bombas = []
+        self.bombas = []
         
     def verificarColisaoEntrePlayerOuInimigos(self):
         for inimigo in self.inimigos:
@@ -325,12 +324,12 @@ class Fases:
                 self.player.player.y = posYInicial
                 self.player.atualizar_metadePlayer()
 
-    # def colocar_bomba(self):
-    #     grid_x = self.player.player.x // tamanho_bloco
-    #     grid_y = self.player.player.y // tamanho_bloco
-    #     if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
-    #         bomba = Bomb(grid_x, grid_y, self)
-    #         self.bombas.append(bomba)   
+    def colocar_bomba(self):
+        grid_x = (self.player.player.x // tamanho_bloco) 
+        grid_y = (self.player.player.y // tamanho_bloco) + 1
+        if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
+            bomba = Bomb(grid_x, grid_y, self)
+            self.bombas.append(bomba)   
                  
     def atualizar(self, teclas):
         self.player.mover(teclas, self.mapa.blocos)
@@ -338,23 +337,24 @@ class Fases:
             if inimigo.vivo:
                 inimigo.mover(self.mapa_layout)
         self.verificarColisaoEntrePlayerOuInimigos()
-        #if teclas[pygame.K_SPACE]:
-           # self.colocar_bomba()
+        if teclas[pygame.K_SPACE]:
+           self.colocar_bomba()
                 
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
             pygame.mixer.music.load(self.musica)
             pygame.mixer.music.play(-1)
             self.musicaTocando = True
+            
     def desenhar(self, tela):
         tela.fill(self.cor_fundo)
         self.mapa.desenhar(tela)
         self.player.desenhar(tela)
         
-        # for bomba in self.bombas:
-        #     tela.blit(Bomb.bomb_img, (bomba.posX_bomba * tamanho_bloco, bomba.posY_bomba * tamanho_bloco))
-        #     for ex, ey in bomba.explosoes:
-        #         tela.blit(Bomb.explosion_img, (ex * tamanho_bloco, ey * tamanho_bloco))
+        for bomba in self.bombas:
+            tela.blit(Bomb.bomb_img, (bomba.posX_bomba * tamanho_bloco, bomba.posY_bomba * tamanho_bloco))
+            for ex, ey in bomba.explosoes:
+                tela.blit(Bomb.explosion_img, (ex * tamanho_bloco, ey * tamanho_bloco))
         
         for inimigo in self.inimigos:
             if inimigo.vivo:
