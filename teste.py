@@ -264,9 +264,11 @@ class Bomb:
         self.posY_bomba = y
         self.fase = fase
         self.explosoes = []
+#         teste
+        self.blocos = []
         threading.Thread(target=self.explodir, daemon=True).start()
         
-    def explodir(self):
+    def explodir(self):                
         time.sleep(self.delay_bomba)
         self.explosoes.append((self.posX_bomba, self.posY_bomba))
         
@@ -274,15 +276,28 @@ class Bomb:
             # imprimir a explosão na tela
             nx, ny = self.posX_bomba + dx, self.posY_bomba + dy           
             if 0 <= ny < len(self.fase.mapa_layout) and 0 <= nx < len(self.fase.mapa_layout[0]):
+                # tentando quebrar os tijolos                             
                 tile = self.fase.mapa_layout[ny][nx]
-                if tile == 2:
+                if tile == 2:      
+                    # Percorrer a array de blocos
+                    for j in self.fase.mapa.blocos:
+                        if j.block.x == nx * tamanho_bloco and j.block.y == ny * tamanho_bloco:
+                            j.backgroundImg = pygame.transform.scale(pygame.image.load("imagens/sprites/tijolos_destruidos1.png"), (tamanho_bloco, tamanho_bloco))
+                            # remove o bloco pela posição da explosão              
+                            time.sleep(0.4)                    
+                            j.backgroundImg = pygame.transform.scale(pygame.image.load("imagens/sprites/tijolos_destruidos2.png"), (tamanho_bloco, tamanho_bloco))
+                            time.sleep(0.2) 
+                            self.fase.mapa.blocos.remove(j) 
+                    # self.fase.mapa.blocos = [i for i in self.fase.mapa.blocos if i.block.x != nx * tamanho_bloco or i.block.y != ny * tamanho_bloco]
                     self.fase.mapa_layout[ny][nx] = 1
                 elif tile in (3, 4):
                     continue
                 self.explosoes.append((nx, ny))
                 
+      
+        # VERIFICAÇÃO DA COLISÃO        
         jogador_x = self.fase.player.player.x // tamanho_bloco
-        jogador_y = self.fase.player.player.y // tamanho_bloco
+        jogador_y = (self.fase.player.player.y + altura_player // 2) // tamanho_bloco
         
         if (jogador_x, jogador_y) in self.explosoes:
             print("💥 Jogador atingido!")
@@ -294,10 +309,7 @@ class Bomb:
                 inimigo.vivo = False
                 print(f"Inimigo eliminado: {inimigo}")
 
-        # for blocos in self.fase.blocos:
-        #     if(blocos.valor == 2) in self.explosoes:
-        #         blocos.
-
+      
         time.sleep(0.5)
         self.fase.bombas.remove(self)                
         
