@@ -342,7 +342,6 @@ class Fases:
         grid_x = (self.player.player.x // tamanho_bloco) 
         grid_y = (self.player.player.y // tamanho_bloco) + 1
         if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
-            
             #condição para adquirir um recurso do semáforo. Quando todos forem utilizados, o acquire com "blocking=False" retorna o False imediatamente para o IF, evitando que o jogo fique esperando uma nova vaga surgir(o que faria o jogo travar)
             if limite_bombas.acquire(blocking=False):
                 bomba = Bomb(grid_x, grid_y, self)
