@@ -12,7 +12,9 @@ VERMELHO = (25, 0, 0)
 VERDE_ESCURO = (0, 100, 0)
 cor_fundoFase = VERDE_ESCURO
 
+#criando um semáforo que irá guardar o limite de bombas que pode ser colocado no mapa por vez
 limite_bombas = threading.Semaphore(3)
+grupo_bombas=[]
 
 mapa1 = [
     [4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4],
@@ -53,7 +55,8 @@ altura_player = 98
 largura_player = 64
 posXInicial = 78
 posYInicial = 70
-delay_framePlayer = 0.07
+delay_framePlayer = 0.04
+delay_frameInimigo = 0.06
 
 
 class Menu:
@@ -128,7 +131,7 @@ class Player:
         self.velocidade = velocidade_player
         self.metadePlayer = pygame.Rect(x, y + (altura // 2), largura - 5, altura // 2)
 
-    def mover(self, teclas, blocos):
+    def mover(self, teclas, blocos, fase):
         mover_x, mover_y = 0, 0      
         self.delay = delay_framePlayer        
         if teclas[pygame.K_LEFT]:
@@ -168,13 +171,13 @@ class Player:
                     self.y_sprites = 0  
         time.sleep(self.delay)
         self.player.x += mover_x
-        self.atualizar_metadePlayer()
-        if self.colidiu(blocos):
+        self.atualizar_metadePlayer()        
+        if self.colidiu(blocos, fase.bombas):
             self.player.x -= mover_x
 
         self.player.y += mover_y
         self.atualizar_metadePlayer()
-        if self.colidiu(blocos):
+        if self.colidiu(blocos, fase.bombas):
             self.player.y -= mover_y
 
         self.atualizar_metadePlayer()
@@ -183,8 +186,15 @@ class Player:
         self.metadePlayer.x = self.player.x
         self.metadePlayer.y = self.player.y + (self.player.height // 2)
 
-    def colidiu(self, blocos):
-        return any(self.metadePlayer.colliderect(b.block) for b in blocos)
+    def colidiu(self, blocos, bombas=[]):
+        for b in blocos:
+            if self.metadePlayer.colliderect(b.block):
+                return True
+        for bom in bombas:
+            if not bom.atravessavel and self.metadePlayer.colliderect(bom.pegar_dims()):
+                return True
+        return False
+        #return any(self.metadePlayer.colliderect(b.block) for b in blocos)
 
     def desenhar(self, tela):
          tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))       
@@ -196,12 +206,15 @@ class Inimigo:
         self.velocidade = velocidade
         self.vivo = True
         self.tamanho = tamanho_bloco
-        self.imagem = pygame.image.load('imagens/inimigo.png')
-        self.imagem = pygame.transform.scale(self.imagem, (self.tamanho, self.tamanho))
+        self.spritesInimigo = pygame.image.load('imagens/sprites/balao.png') # 64 x 64
+        self.inimigo = pygame.Rect(self.x, self.y, tamanho_bloco, tamanho_bloco)
+        self.posX_sprites = 0
+        self.posY_sprites = 0
+        #self.imagem = pygame.transform.scale(self.imagem, (self.tamanho, self.tamanho))
         self.ultimo_movimento = pygame.time.get_ticks()
         self.intervalo_movimento = 500  
 
-    def mover(self, mapa):
+    def mover(self, mapa, fase):
         agora = pygame.time.get_ticks()
         if agora - self.ultimo_movimento < self.intervalo_movimento:
             return  
@@ -210,46 +223,76 @@ class Inimigo:
         direcoes = ['cima', 'baixo', 'esquerda', 'direita']
         random.shuffle(direcoes)
         for direcao in direcoes:
-            if self.pode_mover(direcao, mapa):
+            if self.pode_mover(direcao, mapa, fase):
                 self._atualiza_posicao(direcao)
                 break
 
 
-    def pode_mover(self, direcao, mapa):
-        nova_x, nova_y = self.x, self.y
-        if direcao == 'cima':
-            nova_y -= 1
+    def pode_mover(self, direcao, mapa, fase):
+        nova_x, nova_y = self.x, self.y        
+        if direcao == 'cima':            
+            nova_y -= 1           
         elif direcao == 'baixo':
-            nova_y += 1
+            nova_y += 1           
         elif direcao == 'esquerda':
-            nova_x -= 1
+            nova_x -= 1            
         elif direcao == 'direita':
-            nova_x += 1
+            nova_x += 1            
         # Verifica limites
         if nova_y < 0 or nova_y >= len(mapa) or nova_x < 0 or nova_x >= len(mapa[0]):
             return False
+        for bomba in fase.bombas:
+            if (nova_x, nova_y) == (bomba.posX_bomba, bomba.posY_bomba):
+                return False
         return mapa[nova_y][nova_x] == 1
 
 
     def _atualiza_posicao(self, direcao):
+        self.delay = delay_frameInimigo
         if direcao == 'cima':
             self.y -= 1
+            time.sleep(self.delay)
+            self.posX_sprites += 1
+            if self.posX_sprites > 2:
+                self.posX_sprites = 0 
         elif direcao == 'baixo':
             self.y += 1
+            time.sleep(self.delay)
+            self.posX_sprites = 3
+            if self.posX_sprites > 5:
+                self.posX_sprites = 3            
         elif direcao == 'esquerda':
             self.x -= 1
+            time.sleep(self.delay)
+            self.posX_sprites = 3
+            if self.posX_sprites > 5:
+                self.posX_sprites = 3            
         elif direcao == 'direita':
             self.x += 1
+            time.sleep(self.delay)      
+            self.posX_sprites += 1
+            if self.posX_sprites > 2:
+                self.posX_sprites = 0   
+                
+                            
 
     def verificar_morte(self, explosoes):
+        
         if (self.x, self.y) in explosoes:
+            self.posX_sprites = 6
+            self.x += 0
+            self.y += 0
+            for self.posX_sprites in 10:                
+                time.sleep(0.9)
+                
             self.vivo = False
 
     def __repr__(self):
         return f"Inimigo(x={self.x}, y={self.y}, vivo={self.vivo})"
 
     def desenhar(self, tela):
-        tela.blit(self.imagem, (self.x * self.tamanho, self.y * self.tamanho))
+        #tela.blit(self.imagem, (self.x * self.tamanho, self.y * self.tamanho))
+        tela.blit(self.spritesInimigo, (self.x * self.tamanho, self.y * self.tamanho), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
         
 class Bomb:
     # Atribuindo imagens da bomba e explosões    
@@ -259,15 +302,19 @@ class Bomb:
     explosion_img = pygame.transform.scale(explosion_img, (tamanho_bloco, tamanho_bloco))
     
     def __init__(self, x, y, fase):                
-        self.delay_bomba = 3
+        self.delay_bomba = 2
         self.posX_bomba = x
         self.posY_bomba = y
         self.fase = fase
         self.explosoes = []
+        self.atravessavel = True
 #         teste
         self.blocos = []
-        threading.Thread(target=self.explodir, daemon=True).start()
         
+    # Para o inimigo e o player não passam pela bomba antes de explodir
+    def pegar_dims(self):
+        return pygame.Rect(self.posX_bomba * tamanho_bloco, self.posY_bomba * tamanho_bloco, tamanho_bloco, tamanho_bloco)
+            
     def explodir(self):                
         time.sleep(self.delay_bomba)
         self.explosoes.append((self.posX_bomba, self.posY_bomba))
@@ -300,18 +347,18 @@ class Bomb:
         jogador_y = (self.fase.player.player.y + altura_player // 2) // tamanho_bloco
         
         if (jogador_x, jogador_y) in self.explosoes:
-            print("💥 Jogador atingido!")
             self.fase.player.player.x = posXInicial
             self.fase.player.player.y = posYInicial
 
         for inimigo in self.fase.inimigos:
             if (inimigo.x, inimigo.y) in self.explosoes:
                 inimigo.vivo = False
-                print(f"Inimigo eliminado: {inimigo}")
 
-      
+        #após a explosão, liberamos o recurso do semáforo e permitimos que outra bomba seja colocada 
+        limite_bombas.release() 
         time.sleep(0.5)
-        self.fase.bombas.remove(self)                
+        self.fase.bombas.remove(self)  
+                  
         
 
 class Fases:
@@ -328,29 +375,49 @@ class Fases:
             Inimigo(10, 5),
         ]
         self.bombas = []
-        
+
     def verificarColisaoEntrePlayerOuInimigos(self):
         for inimigo in self.inimigos:
-            if inimigo.vivo and self.player.player.colliderect(pygame.Rect(inimigo.x * tamanho_bloco, inimigo.y * tamanho_bloco, tamanho_bloco, tamanho_bloco)):
+            if inimigo.vivo and self.player.player.colliderect(
+                pygame.Rect(inimigo.x * tamanho_bloco, inimigo.y * tamanho_bloco, tamanho_bloco, tamanho_bloco)
+            ):
+                # O QUE ACONTECE QUANDO O PLAYER COLIDE COM O INIMIGO:
                 self.player.player.x = posXInicial
                 self.player.player.y = posYInicial
-                self.player.atualizar_metadePlayer()
 
-    def colocar_bomba(self):
-        grid_x = (self.player.player.x // tamanho_bloco) 
-        grid_y = (self.player.player.y // tamanho_bloco) + 1
+    def colocar_bomba(self,grupo_bombas):
+        grid_x = self.player.player.x // tamanho_bloco
+        grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
         if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
-            bomba = Bomb(grid_x, grid_y, self)
-            self.bombas.append(bomba)   
+            #condição para adquirir um recurso do semáforo. Quando todos forem utilizados, o acquire com "blocking=False" retorna o False imediatamente para o IF, evitando que o jogo fique esperando uma nova vaga surgir(o que faria o jogo travar)
+            if limite_bombas.acquire(blocking=False):
+                bomba = Bomb(grid_x, grid_y, self)
+                self.bombas.append(bomba) 
+                
+                #ao ativar a bomba, a thread é criada para aquela bomba
+                thBomba=threading.Thread(target=bomba.explodir)
+                #guardando aqui as bomba criada
+                grupo_bombas.append(bomba)
+                thBomba.start()
                  
     def atualizar(self, teclas):
-        self.player.mover(teclas, self.mapa.blocos)
+        self.player.mover(teclas, self.mapa.blocos, self)
         for inimigo in self.inimigos:
             if inimigo.vivo:
-                inimigo.mover(self.mapa_layout)
+                inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
         if teclas[pygame.K_SPACE]:
-           self.colocar_bomba()
+           self.colocar_bomba(grupo_bombas)
+        for bomba in self.bombas:
+            if bomba.atravessavel: 
+                player_grid_x = self.player.player.x // tamanho_bloco
+                player_grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
+                if (player_grid_x, player_grid_y) != (bomba.posX_bomba, bomba.posY_bomba):                    
+                    for bomba in self.bombas:
+                        if bomba.atravessavel:
+                            bomba_rect = bomba.pegar_dims()
+                            if not self.player.metadePlayer.colliderect(bomba_rect):
+                                bomba.atravessavel = False                         
                 
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
