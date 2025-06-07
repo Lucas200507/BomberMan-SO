@@ -55,7 +55,9 @@ altura_player = 98
 largura_player = 64
 posXInicial = 78
 posYInicial = 70
-delay_framePlayer = 0.04
+delay_framePlayer = 100
+delay_morte_player = 150
+delay_morte_inimigo = 200
 delay_frameInimigo = 0.06
 
 
@@ -121,66 +123,87 @@ class Mapa:
 
 
 class Player:
-    def __init__(self, x, y, largura, altura, frame):        
-        self.sprites = pygame.image.load(frame)
+    def __init__(self, x, y, largura, altura, frame, vivo):        
+        self.sprites = pygame.image.load(frame)        
+        self.spritesMorte = pygame.image.load('imagens/sprites/morte_player.png')
+        self.spritesMorte = pygame.transform.scale(self.spritesMorte, (512, 98))
         self.player = pygame.Rect(x, y, largura, altura)    
         # PARA RECORTAR O FRAME PLAYER
         self.x_sprites = 0
         self.y_sprites = 0
-                
+        self.vivo = vivo      
+        # PARA ANIMAR MORTE DO PLAYER
+        self.ultimo_frame_morte = 0
+        self.intervalo_morte = delay_morte_player
+        self.morte_frame = 0
+        self.tempo_morte = 0 
         self.velocidade = velocidade_player
         self.metadePlayer = pygame.Rect(x, y + (altura // 2), largura - 5, altura // 2)
-
+        # PARA DEIXAR A ANIMAÇÃO MAIS FLUÍDA
+        self.frame_atual = 0
+        self.tempo_ultimo_frame = pygame.time.get_ticks()
+        self.intervalo_animacao = delay_framePlayer # em milissegundos
+        
+    def atualizar_animacao(self):
+        agora = pygame.time.get_ticks()
+        if agora - self.tempo_ultimo_frame > self.intervalo_animacao:
+            self.x_sprites += 1
+            self.tempo_ultimo_frame = agora
+        
     def mover(self, teclas, blocos, fase):
         mover_x, mover_y = 0, 0      
-        self.delay = delay_framePlayer        
-        if teclas[pygame.K_LEFT]:
-            mover_x -= self.velocidade            
-            self.x_sprites += 1
-            self.y_sprites = 1
-            if self.x_sprites > 6:
-                self.x_sprites = 2 
-        elif teclas[pygame.K_RIGHT]:
-            mover_x = self.velocidade
-            self.x_sprites += 1
-            self.y_sprites = 0
-            if self.x_sprites > 3:
-                self.x_sprites = 0   
-        if teclas[pygame.K_UP]:
-            mover_y = -self.velocidade
-            self.x_sprites += 1          
-            if self.x_sprites > 7:
-                self.y_sprites = 2 
-                self.x_sprites = 0
-            elif self.x_sprites > 3:                                               
-                    self.y_sprites = 1
-                    self.x_sprites = 7 
-            else:
-                self.y_sprites = 2        
-        elif teclas[pygame.K_DOWN]:           
-            mover_y = self.velocidade
-            self.x_sprites += 1          
-            if self.x_sprites < 7 and self.x_sprites > 4:
-                self.y_sprites = 0  
-            else:     
+               
+        if self.vivo:                            
+            if teclas[pygame.K_LEFT]:
+                mover_x -= self.velocidade            
+                self.atualizar_animacao()
+                self.y_sprites = 1
                 if self.x_sprites > 6:
-                    self.x_sprites = 0                           
-                    self.y_sprites = 1
-                if self.x_sprites > 1:
-                    self.x_sprites = 5
+                    self.x_sprites = 2 
+            elif teclas[pygame.K_RIGHT]:
+                mover_x = self.velocidade
+                self.atualizar_animacao()
+                self.y_sprites = 0
+                if self.x_sprites > 3:
+                    self.x_sprites = 0   
+            if teclas[pygame.K_UP]:
+                mover_y = -self.velocidade
+                self.atualizar_animacao()        
+                if self.x_sprites > 7:
+                    self.y_sprites = 2 
+                    self.x_sprites = 0
+                elif self.x_sprites > 3:                                               
+                        self.y_sprites = 1
+                        self.x_sprites = 7 
+                else:
+                    self.y_sprites = 2        
+            elif teclas[pygame.K_DOWN]:           
+                mover_y = self.velocidade
+                self.atualizar_animacao()    
+                if self.x_sprites < 7 and self.x_sprites > 4:
                     self.y_sprites = 0  
-        time.sleep(self.delay)
-        self.player.x += mover_x
-        self.atualizar_metadePlayer()        
-        if self.colidiu(blocos, fase.bombas):
+                else:     
+                    if self.x_sprites > 6:
+                        self.x_sprites = 0                           
+                        self.y_sprites = 1
+                    if self.x_sprites > 1:
+                        self.x_sprites = 5
+                        self.y_sprites = 0  
+        
+            self.player.x += mover_x
+            self.atualizar_metadePlayer()        
+            if self.colidiu(blocos, fase.bombas):
+                self.player.x -= mover_x
+
+            self.player.y += mover_y
+            self.atualizar_metadePlayer()
+            if self.colidiu(blocos, fase.bombas):
+                self.player.y -= mover_y
+
+            self.atualizar_metadePlayer()
+        else:
             self.player.x -= mover_x
-
-        self.player.y += mover_y
-        self.atualizar_metadePlayer()
-        if self.colidiu(blocos, fase.bombas):
             self.player.y -= mover_y
-
-        self.atualizar_metadePlayer()
 
     def atualizar_metadePlayer(self):
         self.metadePlayer.x = self.player.x
@@ -197,7 +220,24 @@ class Player:
         #return any(self.metadePlayer.colliderect(b.block) for b in blocos)
 
     def desenhar(self, tela):
+        if self.vivo:
          tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))       
+        else:
+            agora = pygame.time.get_ticks()
+            if self.morte_frame < 6:                 
+                # SÓ MUDA O FRAME SE PASSOU O INTERVALO
+                if agora - self.ultimo_frame_morte > self.intervalo_morte:
+                    self.ultimo_frame_morte = agora               
+                    tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))        
+                    self.morte_frame += 1
+                else:
+                   tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))   
+            else:     
+                self.vivo = True
+                self.player.x = posXInicial
+                self.player.y = posYInicial
+                tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98)) 
+                self.morte_frame = 0
 
 class Inimigo:
     def __init__(self, x, y, velocidade=0.1):
@@ -210,22 +250,28 @@ class Inimigo:
         self.inimigo = pygame.Rect(self.x, self.y, tamanho_bloco, tamanho_bloco)
         self.posX_sprites = 0
         self.posY_sprites = 0
-        #self.imagem = pygame.transform.scale(self.imagem, (self.tamanho, self.tamanho))
+        # PARA ANIMAR A MORTE DO INIMIGO
+        self.ultimo_frame_morte = 0
         self.ultimo_movimento = pygame.time.get_ticks()
+        self.morte_frame = 6
+        self.tempo_morte = 0
+        self.intervalo_morte = delay_morte_inimigo
+        # PARA DEIXAR A ANIMAÇÃO MAIS FLUÍDA
+        self.frame_atual = 0
         self.intervalo_movimento = 500  
 
-    def mover(self, mapa, fase):
-        agora = pygame.time.get_ticks()
-        if agora - self.ultimo_movimento < self.intervalo_movimento:
-            return  
-        self.ultimo_movimento = agora
+    def mover(self, mapa, fase):        
+            agora = pygame.time.get_ticks()
+            if agora - self.ultimo_movimento < self.intervalo_movimento:
+                return  
+            self.ultimo_movimento = agora
 
-        direcoes = ['cima', 'baixo', 'esquerda', 'direita']
-        random.shuffle(direcoes)
-        for direcao in direcoes:
-            if self.pode_mover(direcao, mapa, fase):
-                self._atualiza_posicao(direcao)
-                break
+            direcoes = ['cima', 'baixo', 'esquerda', 'direita']
+            random.shuffle(direcoes)
+            for direcao in direcoes:
+                if self.pode_mover(direcao, mapa, fase):
+                    self._atualiza_posicao(direcao)
+                    break
 
 
     def pode_mover(self, direcao, mapa, fase):
@@ -246,58 +292,68 @@ class Inimigo:
                 return False
         return mapa[nova_y][nova_x] == 1
 
+    def atualizar_animacao(self):
+        agora = pygame.time.get_ticks()
+        if agora - self.ultimo_movimento > self.intervalo_movimento:
+            self.posX_sprites += 1
+            self.ultimo_movimento = agora
 
-    def _atualiza_posicao(self, direcao):
-        self.delay = delay_frameInimigo
+    def _atualiza_posicao(self, direcao):        
         if direcao == 'cima':
             self.y -= 1
-            time.sleep(self.delay)
-            self.posX_sprites += 1
+            self.atualizar_animacao()
             if self.posX_sprites > 2:
                 self.posX_sprites = 0 
         elif direcao == 'baixo':
             self.y += 1
-            time.sleep(self.delay)
+            self.atualizar_animacao()
             self.posX_sprites = 3
             if self.posX_sprites > 5:
                 self.posX_sprites = 3            
         elif direcao == 'esquerda':
             self.x -= 1
-            time.sleep(self.delay)
+            self.atualizar_animacao()
             self.posX_sprites = 3
             if self.posX_sprites > 5:
                 self.posX_sprites = 3            
         elif direcao == 'direita':
-            self.x += 1
-            time.sleep(self.delay)      
-            self.posX_sprites += 1
+            self.x += 1             
+            self.atualizar_animacao()
             if self.posX_sprites > 2:
                 self.posX_sprites = 0   
                 
                             
 
-    def verificar_morte(self, explosoes):
-        
-        if (self.x, self.y) in explosoes:
-            self.posX_sprites = 6
+    def verificar_morte(self, explosoes):        
+        if (self.x, self.y) in explosoes:            
             self.x += 0
-            self.y += 0
-            for self.posX_sprites in 10:                
-                time.sleep(0.9)
-                
-            self.vivo = False
+            self.y += 0                
+            self.vivo = False            
 
     def __repr__(self):
         return f"Inimigo(x={self.x}, y={self.y}, vivo={self.vivo})"
 
     def desenhar(self, tela):
-        #tela.blit(self.imagem, (self.x * self.tamanho, self.y * self.tamanho))
-        tela.blit(self.spritesInimigo, (self.x * self.tamanho, self.y * self.tamanho), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+        if self.vivo:        
+            tela.blit(self.spritesInimigo, (self.x * self.tamanho, self.y * self.tamanho), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+        else:
+            agora = pygame.time.get_ticks()  
+            if self.morte_frame < 10:
+                if agora - self.ultimo_frame_morte > self.intervalo_morte:                    
+                    self.ultimo_frame_morte = agora       
+                    tela.blit(self.spritesInimigo, (self.morte_frame * self.tamanho, 0), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+                    self.morte_frame += 1
+                else:
+                    tela.blit(self.spritesInimigo, (self.morte_frame * self.tamanho, 0), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+            else:
+                self.morte_frame = 0
+        
         
 class Bomb:
     # Atribuindo imagens da bomba e explosões    
     bomb_img = pygame.image.load("imagens/bomba.png")
     bomb_img = pygame.transform.scale(bomb_img, (tamanho_bloco, tamanho_bloco)) 
+    # sprites explosão 48 x 44.6
     explosion_img = pygame.image.load("imagens/explosion.png")
     explosion_img = pygame.transform.scale(explosion_img, (tamanho_bloco, tamanho_bloco))
     
@@ -331,7 +387,7 @@ class Bomb:
                         if j.block.x == nx * tamanho_bloco and j.block.y == ny * tamanho_bloco:
                             j.backgroundImg = pygame.transform.scale(pygame.image.load("imagens/sprites/tijolos_destruidos1.png"), (tamanho_bloco, tamanho_bloco))
                             # remove o bloco pela posição da explosão              
-                            time.sleep(0.4)                    
+                            time.sleep(0.3)                    
                             j.backgroundImg = pygame.transform.scale(pygame.image.load("imagens/sprites/tijolos_destruidos2.png"), (tamanho_bloco, tamanho_bloco))
                             time.sleep(0.2) 
                             self.fase.mapa.blocos.remove(j) 
@@ -346,9 +402,9 @@ class Bomb:
         jogador_x = self.fase.player.player.x // tamanho_bloco
         jogador_y = (self.fase.player.player.y + altura_player // 2) // tamanho_bloco
         
+        # MORTE DO PLAYER E INIMIGO PELAS EXPLOSÕES        
         if (jogador_x, jogador_y) in self.explosoes:
-            self.fase.player.player.x = posXInicial
-            self.fase.player.player.y = posYInicial
+            self.fase.player.vivo = False         
 
         for inimigo in self.fase.inimigos:
             if (inimigo.x, inimigo.y) in self.explosoes:
@@ -365,7 +421,7 @@ class Fases:
     def __init__(self, mapa, cor_fundo, musica):
         self.mapa_layout = mapa
         self.mapa = Mapa(self.mapa_layout, tamanho_bloco)
-        self.player = Player(posXInicial, posYInicial, largura_player, altura_player, 'imagens/Sprites_player.png')
+        self.player = Player(posXInicial, posYInicial, largura_player, altura_player, 'imagens/Sprites_player.png', True)
         self.musicaTocando = False
         self.musica = musica
         self.cor_fundo = cor_fundo
@@ -382,28 +438,29 @@ class Fases:
                 pygame.Rect(inimigo.x * tamanho_bloco, inimigo.y * tamanho_bloco, tamanho_bloco, tamanho_bloco)
             ):
                 # O QUE ACONTECE QUANDO O PLAYER COLIDE COM O INIMIGO:
-                self.player.player.x = posXInicial
-                self.player.player.y = posYInicial
+                self.player.vivo = False
+               
 
     def colocar_bomba(self,grupo_bombas):
-        grid_x = self.player.player.x // tamanho_bloco
-        grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
-        if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
-            #condição para adquirir um recurso do semáforo. Quando todos forem utilizados, o acquire com "blocking=False" retorna o False imediatamente para o IF, evitando que o jogo fique esperando uma nova vaga surgir(o que faria o jogo travar)
-            if limite_bombas.acquire(blocking=False):
-                bomba = Bomb(grid_x, grid_y, self)
-                self.bombas.append(bomba) 
-                
-                #ao ativar a bomba, a thread é criada para aquela bomba
-                thBomba=threading.Thread(target=bomba.explodir)
-                #guardando aqui as bomba criada
-                grupo_bombas.append(bomba)
-                thBomba.start()
+        if self.player.vivo:
+            grid_x = self.player.player.x // tamanho_bloco
+            grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
+            if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
+                #condição para adquirir um recurso do semáforo. Quando todos forem utilizados, o acquire com "blocking=False" retorna o False imediatamente para o IF, evitando que o jogo fique esperando uma nova vaga surgir(o que faria o jogo travar)
+                if limite_bombas.acquire(blocking=False):
+                    bomba = Bomb(grid_x, grid_y, self)
+                    self.bombas.append(bomba) 
+                    
+                    #ao ativar a bomba, a thread é criada para aquela bomba
+                    thBomba=threading.Thread(target=bomba.explodir)
+                    #guardando aqui as bomba criada
+                    grupo_bombas.append(bomba)
+                    thBomba.start()
                  
     def atualizar(self, teclas):
         self.player.mover(teclas, self.mapa.blocos, self)
         for inimigo in self.inimigos:
-            if inimigo.vivo:
+            if inimigo.vivo and self.player.vivo:
                 inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
         if teclas[pygame.K_SPACE]:
@@ -437,7 +494,7 @@ class Fases:
         
         for inimigo in self.inimigos:
             if inimigo.vivo:
-                inimigo.desenhar(tela)
+                inimigo.desenhar(tela)           
                 
 
 
