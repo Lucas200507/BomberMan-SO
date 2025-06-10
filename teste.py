@@ -3,7 +3,10 @@ from pygame.locals import *
 import random
 import threading
 import time
+import datetime
 from sys import exit
+
+
 
 # Cores
 PRETO = (0, 0, 0)
@@ -44,10 +47,11 @@ relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
 
 largura = 1250
-altura = 960
+altura = 950
 
 pygame.display.set_caption('TESTE')
 tela = pygame.display.set_mode((largura, altura))
+
 
 velocidade_player = 15
 tamanho_bloco = 74
@@ -60,6 +64,8 @@ delay_morte_player = 150
 delay_morte_inimigo = 200
 delay_frameInimigo = 0.06
 
+vidas_player = 3
+tempo_partida = 180
 
 class Menu:
     def __init__(self, background, logo, texto, musica):
@@ -202,6 +208,7 @@ class Player:
 
             self.atualizar_metadePlayer()
         else:
+             
             self.player.x -= mover_x
             self.player.y -= mover_y
 
@@ -350,6 +357,7 @@ class Inimigo:
         
         
 class Bomb:
+    
     # Atribuindo imagens da bomba e explosões    
     bomb_img = pygame.image.load("imagens/bomba.png")
     bomb_img = pygame.transform.scale(bomb_img, (tamanho_bloco, tamanho_bloco)) 
@@ -404,7 +412,9 @@ class Bomb:
         
         # MORTE DO PLAYER E INIMIGO PELAS EXPLOSÕES        
         if (jogador_x, jogador_y) in self.explosoes:
-            self.fase.player.vivo = False         
+            self.fase.player.vivo = False    
+            global vidas_player
+            vidas_player -= 1 
 
         for inimigo in self.fase.inimigos:
             if (inimigo.x, inimigo.y) in self.explosoes:
@@ -431,14 +441,22 @@ class Fases:
             Inimigo(10, 5),
         ]
         self.bombas = []
+        
 
     def verificarColisaoEntrePlayerOuInimigos(self):
+        #usando if para ignorar o verificarColisão enquanto o player estiver morto, evitando a perda de vidas durante a animação de morte do player
+        if self.player.vivo == False:
+            return
+        
         for inimigo in self.inimigos:
             if inimigo.vivo and self.player.player.colliderect(
                 pygame.Rect(inimigo.x * tamanho_bloco, inimigo.y * tamanho_bloco, tamanho_bloco, tamanho_bloco)
             ):
                 # O QUE ACONTECE QUANDO O PLAYER COLIDE COM O INIMIGO:
                 self.player.vivo = False
+                global vidas_player
+                vidas_player -= 1 
+                
                
 
     def colocar_bomba(self,grupo_bombas):
@@ -457,7 +475,7 @@ class Fases:
                     grupo_bombas.append(bomba)
                     thBomba.start()
                  
-    def atualizar(self, teclas):
+    def atualizar(self, teclas): 
         self.player.mover(teclas, self.mapa.blocos, self)
         for inimigo in self.inimigos:
             if inimigo.vivo and self.player.vivo:
@@ -474,7 +492,8 @@ class Fases:
                         if bomba.atravessavel:
                             bomba_rect = bomba.pegar_dims()
                             if not self.player.metadePlayer.colliderect(bomba_rect):
-                                bomba.atravessavel = False                         
+                                bomba.atravessavel = False  
+                             
                 
     def iniciarMusicaFase(self):
         if not self.musicaTocando:
@@ -494,20 +513,26 @@ class Fases:
         
         for inimigo in self.inimigos:
             if inimigo.vivo:
-                inimigo.desenhar(tela)           
+                inimigo.desenhar(tela)
+                
+    #ef mostrarVidas(tela):
+        
                 
 
 
 # ===================================================
 menu = Menu(BRANCO, 'imagens/logoBao.png', 'Clique ENTER para iniciar o jogo', 'sons/musica_telaInicial.mp3')
 fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
-
 estado = "menu"
 menuMusicaTocando = False
 
 
+
+
+
 rodando = True
 while rodando:
+    
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             pygame.quit()
@@ -521,20 +546,34 @@ while rodando:
             if evento.key == pygame.K_RETURN:
                 estado = "jogo"
                 pygame.mixer.music.stop()
+                
             
             
-    teclas = pygame.key.get_pressed()                
+    teclas = pygame.key.get_pressed()     
+
+    fonteText = pygame.font.SysFont('Arial', 40)
+    vidas = f'Vidas: {vidas_player}'  
+    vidasFormatado= fonteText.render(vidas, True, BRANCO)    
+    time_formatado = str(datetime.timedelta(seconds=tempo_partida))
+    tempo = fonteText.render(time_formatado,True,BRANCO)
+
+    pygame.font.init()         
     if estado == "menu":
         menu.desenhar(tela)        
         if not menuMusicaTocando:
              pygame.mixer.music.load(menu.musica)
              pygame.mixer.music.play(-1)
              menuMusicaTocando = True
-    elif estado == "jogo":        
+    elif estado == "jogo":     
+        tela.blit(tempo,(350,40))   
         menuMusicaTocando = False
         fase1.atualizar(teclas)
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
+        tela.blit(vidasFormatado, (950,40))
+        
+        
+        
         
     relogio.tick(FPS)    
     pygame.display.flip()
