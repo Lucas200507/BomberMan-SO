@@ -46,7 +46,7 @@ FPS = 30
 relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
 
-largura = 1250
+largura = 1270
 altura = 950
 
 pygame.display.set_caption('TESTE')
@@ -516,6 +516,15 @@ class Fases:
                 inimigo.desenhar(tela)
                 
     #ef mostrarVidas(tela):
+
+def TelaMorte(tela):
+    tela.fill((0,0,0))  # tela preta
+    fonte = pygame.font.SysFont('Arial', 80)
+    texto = fonte.render('Você morreu!', True, (255, 0, 0))  # vermelho
+    ret_texto = texto.get_rect(center=(tela.get_width()//2, tela.get_height()//2))
+    tela.blit(texto, ret_texto)
+    pygame.display.flip()
+    pygame.time.delay(3000)  # pausa 3 segundos
         
                 
 
@@ -571,6 +580,17 @@ while rodando:
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
         tela.blit(vidasFormatado, (950,40))
+    
+    if not fase1.player.vivo:
+        pygame.mixer.music.pause()     # pausa a música
+        TelaMorte(tela)                # mostra a tela de morte e faz delay de 3s
+        pygame.mixer.music.unpause()   # retoma a música
+
+        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')  # reinicia a fase
+        fase1.desenhar(tela)
+        fase1.iniciarMusicaFase()
+        tela.blit(vidasFormatado, (950,40))
+
         
         
         
