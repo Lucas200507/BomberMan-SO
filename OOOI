@@ -46,12 +46,11 @@ FPS = 30
 relogio = pygame.time.Clock()
 pygame.mixer.music.set_volume(0.5)
 
-largura = 1270
+largura = 1250
 altura = 950
 
 pygame.display.set_caption('TESTE')
 tela = pygame.display.set_mode((largura, altura))
-
 
 velocidade_player = 15
 tamanho_bloco = 74
@@ -440,10 +439,11 @@ class Aberta:
     def __init__(self, abre, apos):
         self.abre = pygame.image.load(abre)
         self.apos = apos
-        self.portinha = pygame.Rect(self.apos[0], self.apos[1], tamanho_bloco, tamanho_bloco)
     
     def desenhar(self, tela):
-        tela.blit(self.abre, self.apos)                 
+        tela.blit(self.abre, self.apos)
+
+                  
         
 
 class Fases:
@@ -460,13 +460,13 @@ class Fases:
             Inimigo(10, 5),
         ]
         self.bombas = []
-        self.fimjogo = Fim_jogo
-        self.porta = Porta("imagens/pcerta-1.png.png", (1110, 29)) 
-        self.abrir = Aberta("imagens/pcerta-2.png.png", (1110, 29))
-        
+        self.porta = Porta("pcerta-1.png.png", (1110, 29)) 
+        self.abrir = Aberta("pcerta-2.png.png", (1110, 29))
 
     def todos_mortos(self):
-        return all(not inimigo.vivo for inimigo in self.inimigos)    
+        return all(not inimigo.vivo for inimigo in self.inimigos)
+
+        
 
     def verificarColisaoEntrePlayerOuInimigos(self):
         #usando if para ignorar o verificarColisão enquanto o player estiver morto, evitando a perda de vidas durante a animação de morte do player
@@ -542,69 +542,17 @@ class Fases:
                 self.porta.desenhar(tela) 
         for inimigo in self.inimigos:
             if self.todos_mortos():
-                self.abrir.desenhar(tela) 
+                self.abrir.desenhar(tela)
                 
     #ef mostrarVidas(tela):
-
-def TelaMorte(tela):
-    tela.fill((0,0,0))  # tela preta
-    fonte = pygame.font.SysFont('Arial', 80)
-    texto = fonte.render('Você morreu!', True, (255, 0, 0))  # vermelho
-    ret_texto = texto.get_rect(center=(tela.get_width()//2, tela.get_height()//2))
-    tela.blit(texto, ret_texto)
-    pygame.display.flip()
-    pygame.time.delay(3000)  # pausa 3 segundos
-
-class Fim_jogo:
-
-    def __init__(self,  lframes, fpos, inframes,  musica):
-        self.cor_fundo = PRETO
-        self.lframes = [pygame.image.load(arframes) for arframes in lframes]
-        self.fpos = fpos
-        self.inframes = inframes
-        self.musica = musica
-        self.musicaBomba = False
-        self.cframe = 0 
-        self.ftempo = 0
         
-
-    def iniciarMusicaMano(self):
-        if not self.musicaBomba:
-            pygame.mixer.music.load(self.musica)
-            pygame.mixer.music.play(-1)
-            self.musicaBomba = True
-
-    #def interacao(self, tecla):
-     #   return tecla == pygame.MOUSEBUTTONDOWN
-    
-    def atual(self):
-        self.ftempo += 1
-        if self.ftempo >= self.inframes:
-            self.cframe = (self.cframe + 1) % len(self.lframes)
-            self.ftempo = 0
-
-    def desenhar(self, tela):
-        tela.fill(self.cor_fundo)
-        tela.blit(self.lframes[self.cframe], self.fpos)
-       
-frame_bacana = [
-            "imagens/fr1-1.png.png",
-            "imagens/fr1-2.png.png",
-            "imagens/fr1-3.png.png",
-            "imagens/fr1-4.png.png",
-            "imagens/fr1-5.png.png",
-            "imagens/fr1-6.png.png",
-            "imagens/fr1-7.png.png"
-        ]
-
-                
                 
 
 
 # ===================================================
 menu = Menu(BRANCO, 'imagens/logoBao.png', 'Clique ENTER para iniciar o jogo', 'sons/musica_telaInicial.mp3')
 fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
-gif = Fim_jogo(frame_bacana, (10, 0), inframes=2, musica="sons/bombermusica.mp3")
+
 estado = "menu"
 menuMusicaTocando = False
 
@@ -628,19 +576,16 @@ while rodando:
             if evento.key == pygame.K_RETURN:
                 estado = "jogo"
                 pygame.mixer.music.stop()
-        elif estado == "fim":
-          gif.iniciarMusicaMano()
-          gif.atual()
-          gif.desenhar(tela)       
+                
             
             
     teclas = pygame.key.get_pressed()     
 
     fonteText = pygame.font.SysFont('Arial', 40)
     vidas = f'Vidas: {vidas_player}'  
-    vidasFormatado= fonteText.render(vidas, True, BRANCO)    
-    time_formatado = str(datetime.timedelta(seconds=tempo_partida))
-    tempo = fonteText.render(time_formatado,True,BRANCO)
+    vidasFormatado= fonteText.render(vidas, True, BRANCO)
+    tempo = fonteText.render(datetime.timedelta(seconds=tempo_partida),True,BRANCO)
+    
 
     pygame.font.init()         
     if estado == "menu":
@@ -656,35 +601,6 @@ while rodando:
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
         tela.blit(vidasFormatado, (950,40))
-
-        if fase1.player.metadePlayer.colliderect(fase1.abrir.portinha):
-          estado = "fim"
-          pygame.mixer.music.stop()
-          gif.iniciarMusicaMano()
-    
-    
-    if not fase1.player.vivo:
-        pygame.mixer.music.pause()     # pausa a música
-        TelaMorte(tela)                # mostra a tela de morte e faz delay de 3s
-        pygame.mixer.music.unpause()   # retoma a música
-        
-        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
-
-        if fase1.player is not None:
-           fase1.desenhar(tela)
-           fase1.iniciarMusicaFase()
-           tela.blit(vidasFormatado, (950,40))
-
-        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')  # reinicia a fase
-        fase1.desenhar(tela)
-        fase1.iniciarMusicaFase()
-        tela.blit(vidasFormatado, (950,40))
-       
-
-    elif estado == "fim":
-         gif.atual()
-         gif.desenhar(tela)
-        
         
         
         
