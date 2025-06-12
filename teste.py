@@ -429,21 +429,17 @@ class Porta:
     def __init__(self, imagem, pos):
         self.imagem = pygame.image.load(imagem)
         self.pos = pos
-    
-    
-
-    def desenhar(self, tela):
-        tela.blit(self.imagem, self.pos)
-        
-
-class Aberta:
-    def __init__(self, abre, apos):
-        self.abre = pygame.image.load(abre)
-        self.apos = apos
-        self.portinha = pygame.Rect(self.apos[0], self.apos[1], tamanho_bloco, tamanho_bloco)
+        self.aberta = False
+        self.portinha = pygame.Rect(self.pos[0], self.pos[1], tamanho_bloco, tamanho_bloco)
+         
+  
+  
+    def abrir(self, imagem_aberta):
+        self.imagem = pygame.image.load(imagem_aberta)
+        self.aberta = True
     
     def desenhar(self, tela):
-        tela.blit(self.abre, self.apos)                 
+        tela.blit(self.imagem, self.pos)                
         
 
 class Fases:
@@ -456,13 +452,15 @@ class Fases:
         self.cor_fundo = cor_fundo
         self.inimigos = [
             Inimigo(5, 5),
-            Inimigo(5, 7),
-            Inimigo(10, 5),
+            #Inimigo(5, 7),
+            #Inimigo(10, 5),
         ]
         self.bombas = []
         self.fimjogo = Fim_jogo
         self.porta = Porta("imagens/pcerta-1.png.png", (1110, 29)) 
-        self.abrir = Aberta("imagens/pcerta-2.png.png", (1110, 29))
+
+        if self.todos_mortos():
+         self.porta.abrir ("imagens/pcerta-2.png.png", (1110, 29))
         
 
     def todos_mortos(self):
@@ -506,6 +504,10 @@ class Fases:
             if inimigo.vivo and self.player.vivo:
                 inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
+
+        if self.todos_mortos() and not self.porta.aberta:
+         self.porta.abrir("imagens/pcerta-2.png.png")
+
         if teclas[pygame.K_SPACE]:
            self.colocar_bomba(grupo_bombas)
         for bomba in self.bombas:
@@ -539,10 +541,11 @@ class Fases:
         for inimigo in self.inimigos:
             if inimigo.vivo:
                 inimigo.desenhar(tela)
-                self.porta.desenhar(tela) 
+            
+        self.porta.desenhar(tela) 
         for inimigo in self.inimigos:
             if self.todos_mortos():
-                self.abrir.desenhar(tela) 
+             self.porta.abrir("imagens/pcerta-2.png.png")
                 
     #ef mostrarVidas(tela):
 
@@ -628,10 +631,11 @@ while rodando:
             if evento.key == pygame.K_RETURN:
                 estado = "jogo"
                 pygame.mixer.music.stop()
-        elif estado == "fim":
-          gif.iniciarMusicaMano()
-          gif.atual()
-          gif.desenhar(tela)       
+            if fase1.porta.aberta and fase1.player.metadePlayer.colliderect(fase1.porta.portinha):
+              estado == "fim"
+              pygame.mixer.music.stop()
+              gif.iniciarMusicaMano()
+           
             
             
     teclas = pygame.key.get_pressed()     
@@ -656,11 +660,16 @@ while rodando:
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
         tela.blit(vidasFormatado, (950,40))
+    elif estado == "fim":
+        gif.atual()
+        gif.desenhar(tela)
 
-        if fase1.player.metadePlayer.colliderect(fase1.abrir.portinha):
-          estado = "fim"
-          pygame.mixer.music.stop()
-          gif.iniciarMusicaMano()
+    if fase1.porta.aberta and fase1.player.metadePlayer.colliderect(fase1.porta.portinha):
+     if estado != "fim":  # para evitar repetir
+        estado = "fim"
+        pygame.mixer.music.stop()
+        gif.iniciarMusicaMano()
+
     
     
     if not fase1.player.vivo:
@@ -675,15 +684,9 @@ while rodando:
            fase1.iniciarMusicaFase()
            tela.blit(vidasFormatado, (950,40))
 
-        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')  # reinicia a fase
-        fase1.desenhar(tela)
-        fase1.iniciarMusicaFase()
-        tela.blit(vidasFormatado, (950,40))
-       
+        
 
-    elif estado == "fim":
-         gif.atual()
-         gif.desenhar(tela)
+    
         
         
         
