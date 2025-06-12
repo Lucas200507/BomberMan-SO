@@ -549,11 +549,52 @@ class Fases:
 def TelaMorte(tela):
     tela.fill((0,0,0))  # tela preta
     fonte = pygame.font.SysFont('Arial', 80)
-    texto = fonte.render('Você morreu!', True, (255, 0, 0))  # vermelho
+    texto = fonte.render('Você morreu!', True, (255, 0, 0))  # Define a cor como vermelho
     ret_texto = texto.get_rect(center=(tela.get_width()//2, tela.get_height()//2))
     tela.blit(texto, ret_texto)
     pygame.display.flip()
     pygame.time.delay(3000)  # pausa 3 segundos
+
+def TelaDerrota(tela):
+    fonte = pygame.font.SysFont('Arial', 80)
+    texto = fonte.render('Você perdeu!', True, (255, 0, 0)) 
+    
+    tela.fill((0, 0, 0))  
+    tela.blit(texto, ((tela.get_width() - texto.get_width()) // 2, (tela.get_height() - texto.get_height()) // 2))
+    pygame.display.flip()
+    pygame.time.delay(3000)  
+
+def telaDeLoading(tela):
+    tela.fill((0, 0, 0))  
+    fonte = pygame.font.SysFont('Arial', 50)
+    texto = fonte.render('Carregando...', True, (255, 255, 255))  
+    tela.blit(texto, ((tela.get_width() - texto.get_width()) // 2, (tela.get_height() - texto.get_height()) // 2))
+    pygame.display.flip()
+    pygame.time.delay(3000)  
+
+def TelaContinuar(tela):
+    fonte = pygame.font.SysFont('Arial', 30)
+    texto1 = fonte.render('Deseja continuar?', True, (255, 255, 255)) 
+    texto2 = fonte.render('Pressione ENTER para continuar ou ESC para sair.', True, (255, 255, 255))
+
+    while True:
+        tela.fill((0, 0, 0))
+        tela.blit(texto1, ((tela.get_width() - texto1.get_width()) // 2, tela.get_height() // 2 - 40))
+        tela.blit(texto2, ((tela.get_width() - texto2.get_width()) // 2, tela.get_height() // 2 + 10))
+        pygame.display.flip()
+
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_RETURN:
+                    return True   # Jogador quer continuar
+                elif evento.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+
+
 
 class Fim_jogo:
 
@@ -614,7 +655,7 @@ menuMusicaTocando = False
 
 rodando = True
 while rodando:
-    
+
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             pygame.quit()
@@ -623,73 +664,76 @@ while rodando:
             if evento.key == pygame.K_ESCAPE:
                 pygame.quit()
                 exit()
-                
+
         if evento.type == pygame.KEYDOWN and estado == "menu":
             if evento.key == pygame.K_RETURN:
                 estado = "jogo"
                 pygame.mixer.music.stop()
+
         elif estado == "fim":
-          gif.iniciarMusicaMano()
-          gif.atual()
-          gif.desenhar(tela)       
-            
-            
-    teclas = pygame.key.get_pressed()     
+            gif.iniciarMusicaMano()
+            gif.atual()
+            gif.desenhar(tela)
+
+    teclas = pygame.key.get_pressed()
 
     fonteText = pygame.font.SysFont('Arial', 40)
-    vidas = f'Vidas: {vidas_player}'  
-    vidasFormatado= fonteText.render(vidas, True, BRANCO)    
+    vidas = f'Vidas: {vidas_player}'
+    vidasFormatado = fonteText.render(vidas, True, BRANCO)
     time_formatado = str(datetime.timedelta(seconds=tempo_partida))
-    tempo = fonteText.render(time_formatado,True,BRANCO)
+    tempo = fonteText.render(time_formatado, True, BRANCO)
 
-    pygame.font.init()         
+    pygame.font.init()
     if estado == "menu":
-        menu.desenhar(tela)        
+        menu.desenhar(tela)
         if not menuMusicaTocando:
-             pygame.mixer.music.load(menu.musica)
-             pygame.mixer.music.play(-1)
-             menuMusicaTocando = True
-    elif estado == "jogo":     
-        tela.blit(tempo,(350,40))   
+            pygame.mixer.music.load(menu.musica)
+            pygame.mixer.music.play(-1)
+            menuMusicaTocando = True
+
+    elif estado == "jogo":
+        tela.blit(tempo, (350, 40))
         menuMusicaTocando = False
         fase1.atualizar(teclas)
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
-        tela.blit(vidasFormatado, (950,40))
+        tela.blit(vidasFormatado, (950, 40))
 
         if fase1.player.metadePlayer.colliderect(fase1.abrir.portinha):
-          estado = "fim"
-          pygame.mixer.music.stop()
-          gif.iniciarMusicaMano()
-    
-    
-    if not fase1.player.vivo:
-        pygame.mixer.music.pause()     # pausa a música
-        TelaMorte(tela)                # mostra a tela de morte e faz delay de 3s
-        pygame.mixer.music.unpause()   # retoma a música
-        
-        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
+            estado = "fim"
+            pygame.mixer.music.stop()
+            gif.iniciarMusicaMano()
 
-        if fase1.player is not None:
-           fase1.desenhar(tela)
-           fase1.iniciarMusicaFase()
-           tela.blit(vidasFormatado, (950,40))
+        if not fase1.player.vivo:
+            pygame.mixer.music.pause()
+            TelaMorte(tela)
 
-        fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')  # reinicia a fase
-        fase1.desenhar(tela)
-        fase1.iniciarMusicaFase()
-        tela.blit(vidasFormatado, (950,40))
-       
+            if vidas_player <= 0:
+                telaDeLoading(tela)  # 1ª tela de carregamento
+                TelaDerrota(tela)
+
+                if TelaContinuar(tela):
+                    telaDeLoading(tela)  # 2ª tela de carregamento
+                    vidas_player = 3
+                    fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
+                    estado = "jogo"
+                    pygame.mixer.music.play(-1)
+                else:
+                    pygame.quit()
+                    exit()
+
+            else:
+                pygame.mixer.music.unpause()
+                fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
+                fase1.desenhar(tela)
+                fase1.iniciarMusicaFase()
+                tela.blit(vidasFormatado, (950, 40))
 
     elif estado == "fim":
-         gif.atual()
-         gif.desenhar(tela)
-        
-        
-        
-        
-        
-    relogio.tick(FPS)    
+        gif.atual()
+        gif.desenhar(tela)
+
+    relogio.tick(FPS)
     pygame.display.flip()
-        
-pygame.quit()      
+
+pygame.quit()
