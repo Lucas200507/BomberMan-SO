@@ -27,13 +27,15 @@ posYInicial = 70
 delay_framePlayer = 100
 delay_morte_player = 150
 vidas_player = 3
+pontos=0
 
 #   INIMIGO
 delay_morte_inimigo = 200
 delay_frameInimigo = 0.06
 
 #PARTIDA
-tempo_partida = 180
+
+
 
 
 # Cores
