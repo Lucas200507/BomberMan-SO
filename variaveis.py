@@ -34,7 +34,7 @@ delay_morte_inimigo = 200
 delay_frameInimigo = 0.06
 
 #PARTIDA
-tempo_partida = 180
+
 
 
 
