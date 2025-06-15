@@ -411,11 +411,21 @@ class Fases:
         self.musicaTocando = False
         self.musica = musica
         self.cor_fundo = cor_fundo
-        self.inimigos = [
-            Inimigo(5, 5),
-            # Inimigo(5, 7),
-            # Inimigo(10, 5),
-        ]
+        if fase_atual == 1:            
+            self.inimigos = [
+                Inimigo(5, 5),              
+            ]
+        elif fase_atual == 2:
+            self.inimigos = [
+                Inimigo(5, 5),
+                Inimigo(5, 7),                
+            ]
+        elif fase_atual == 3:
+            self.inimigos = [
+                Inimigo(5, 5),
+                Inimigo(5, 7),
+                Inimigo(10, 5),
+            ]
         # tempo Partida
         self.tempo_limite = tempo_limite
         self.tempo_inicial = pygame.time.get_ticks() # identifica quanod a fase começou
