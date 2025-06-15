@@ -371,9 +371,13 @@ class Bomb:
         
         # MORTE DO PLAYER E INIMIGO PELAS EXPLOSÕES        
         if (jogador_x, jogador_y) in self.explosoes:
-            self.fase.player.vivo = False
-            global vidas_player
-            vidas_player -= 1 
+            if self.fase.player.vivo == False:
+                return
+            else: 
+                self.fase.player.vivo = False
+                global vidas_player
+                vidas_player -= 1
+                #return
 
         for inimigo in self.fase.inimigos:
             if (inimigo.x, inimigo.y) in self.explosoes:
@@ -459,8 +463,6 @@ class Fases:
                 global vidas_player
                 vidas_player -= 1 
                 
-               
-
     def colocar_bomba(self,grupo_bombas):                        
         if self.player.vivo:
             grid_x = self.player.player.x // tamanho_bloco
@@ -760,6 +762,8 @@ while rodando:
                     vidas_player = 3                
                     fase = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3', 1, 3, 1)
                     estado = "jogo"
+                    fase.atualizar(teclas)
+                    fase.desenhar(tela)
                     pygame.mixer.music.play(-1)
                 else:
                     pygame.quit()
