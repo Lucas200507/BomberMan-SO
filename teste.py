@@ -418,13 +418,13 @@ class Fases:
         elif fase_atual == 2:
             self.inimigos = [
                 Inimigo(5, 5),
-                #Inimigo(5, 7),                
+                Inimigo(5, 7),                
             ]
         elif fase_atual == 3:
             self.inimigos = [
                 Inimigo(5, 5),
-                # Inimigo(5, 7),
-                # Inimigo(10, 5),
+                Inimigo(5, 7),
+                Inimigo(10, 5),
             ]
         # tempo Partida
         self.tempo_limite = tempo_limite
