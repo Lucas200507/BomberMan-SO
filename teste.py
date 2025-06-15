@@ -5,81 +5,38 @@ import threading
 import time
 import datetime
 from sys import exit
-
-
-
-# Cores
-PRETO = (0, 0, 0)
-BRANCO = (255, 255, 255)
-VERMELHO = (25, 0, 0)
-VERDE_ESCURO = (0, 100, 0)
-cor_fundoFase = VERDE_ESCURO
-
+from variaveis import *
 #criando um semáforo que irá guardar o limite de bombas que pode ser colocado no mapa por vez
-limite_bombas = threading.Semaphore(3)
+# LIMITANDO AS THREADS DAS BOMBAS, PRECISA DEFINIR:
+#   1 BOMBA PARA FASE1
+#   2 BOMBAS PARA FASE2
+#   3 BOMBAS PARA FASE3
+
+
 grupo_bombas=[]
-
-mapa1 = [
-    [4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4],
-    [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-    [4, 1, 3, 1, 3, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 2, 4],
-    [4, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 1, 1, 4],
-    [4, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 4],
-    [4, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-    [4, 2, 3, 1, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 2, 4],
-    [4, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4],
-    [4, 1, 3, 1, 3, 1, 3, 2, 3, 1, 3, 1, 3, 1, 3, 1, 4],
-    [4, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 2, 1, 4],
-    [4, 2, 3, 1, 3, 1, 3, 2, 3, 2, 3, 1, 3, 1, 3, 1, 4],
-    [4, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4],
-    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-]
-
 pygame.init()
 
-# SPRITES TIJOLOS = 192 x 64
-# TAMANHO DE CADA SPRITE = 64 x 64
-#           --- TOGLEFT ---
-# SPRITE[0] = 0*64 x 0 | SPRITE[1] = 1*6
+relogio = pygame.time.Clock() # ininiando o relógio
+pygame.mixer.music.set_volume(0.5) # definindo o volume da música
+pygame.display.set_caption('TESTE') # definindo o nome do título da janela
+tela = pygame.display.set_mode((largura, altura)) # criando a tela principal, com largura e altura
 
-FPS = 30
-relogio = pygame.time.Clock()
-pygame.mixer.music.set_volume(0.5)
-
-largura = 1250
-altura = 950
-
-pygame.display.set_caption('TESTE')
-tela = pygame.display.set_mode((largura, altura))
-
-velocidade_player = 15
-tamanho_bloco = 74
-altura_player = 98
-largura_player = 64
-posXInicial = 78
-posYInicial = 70
-delay_framePlayer = 100
-delay_morte_player = 150
-delay_morte_inimigo = 200
-delay_frameInimigo = 0.06
-
-vidas_player = 3
-tempo_partida = 180
-
+#  Criando a tela Menu
 class Menu:
     def __init__(self, background, logo, texto, musica):
         self.cor_fundo = background
         self.texto = texto
-        self.logo = pygame.transform.scale(pygame.image.load(logo), (500, 320))
+        self.logo = pygame.transform.scale(pygame.image.load(logo), (500, 320)) # rendenizanod o tamanho da logo
         self.musica = musica
         self.musicaTocando = False
 
     def iniciarMusicaMenu(self):
         if not self.musicaTocando:
             pygame.mixer.music.load(self.musica)
-            pygame.mixer.music.play(-1)
+            pygame.mixer.music.play(-1) # declarando a musíca como um loop infinito
             self.musicaTocando = True
 
+    #   Desenhando na tela principal 
     def desenhar(self, tela):
         tela.fill(self.cor_fundo)
         fonteText = pygame.font.SysFont('Arial', 40)
@@ -93,7 +50,6 @@ class Menu:
     def interacao(self, tecla):
         return tecla == pygame.K_r
 
-
 class Blocos:
     def __init__(self, x, y, tamanho, img):
         self.block = pygame.Rect(x, y, tamanho, tamanho)
@@ -101,7 +57,6 @@ class Blocos:
 
     def desenhar(self, tela):
         tela.blit(self.backgroundImg, self.block.topleft)
-
 
 class Mapa:
     def __init__(self, layout, tamanho_bloco):
@@ -112,6 +67,7 @@ class Mapa:
     def carregar_layout(self, layout):
         for y, linha in enumerate(layout):
             for x, valor in enumerate(linha):
+                # array blocos recebendo de acordo com o valor da matriz do mapa
                 if valor == 3:
                     self.blocos.append(Blocos(x * self.tamanho_bloco, y * self.tamanho_bloco, self.tamanho_bloco,
                                               "imagens/Bloco_indestrutivel.png"))
@@ -128,22 +84,22 @@ class Mapa:
 
 
 class Player:
-    def __init__(self, x, y, largura, altura, frame, vivo):        
+    def __init__(self, x, y, largura_player, altura_player, frame, vivo):        
         self.sprites = pygame.image.load(frame)        
         self.spritesMorte = pygame.image.load('imagens/sprites/morte_player.png')
         self.spritesMorte = pygame.transform.scale(self.spritesMorte, (512, 98))
-        self.player = pygame.Rect(x, y, largura, altura)    
+        self.player = pygame.Rect(x, y, largura_player, altura_player)    
         # PARA RECORTAR O FRAME PLAYER
         self.x_sprites = 0
         self.y_sprites = 0
         self.vivo = vivo      
-        # PARA ANIMAR MORTE DO PLAYER
+        # PARA ANIMAR MORTE DO PLAYER]        
         self.ultimo_frame_morte = 0
         self.intervalo_morte = delay_morte_player
         self.morte_frame = 0
         self.tempo_morte = 0 
         self.velocidade = velocidade_player
-        self.metadePlayer = pygame.Rect(x, y + (altura // 2), largura - 5, altura // 2)
+        self.metadePlayer = pygame.Rect(x, y + (altura_player // 2), largura_player - 10, altura_player // 2)
         # PARA DEIXAR A ANIMAÇÃO MAIS FLUÍDA
         self.frame_atual = 0
         self.tempo_ultimo_frame = pygame.time.get_ticks()
@@ -157,7 +113,7 @@ class Player:
         
     def mover(self, teclas, blocos, fase):
         mover_x, mover_y = 0, 0      
-               
+        # Para a movimentação e animação do               
         if self.vivo:                            
             if teclas[pygame.K_LEFT]:
                 mover_x -= self.velocidade            
@@ -206,8 +162,7 @@ class Player:
                 self.player.y -= mover_y
 
             self.atualizar_metadePlayer()
-        else:
-             
+        else:             
             self.player.x -= mover_x
             self.player.y -= mover_y
 
@@ -225,7 +180,7 @@ class Player:
         return False
         #return any(self.metadePlayer.colliderect(b.block) for b in blocos)
 
-    def desenhar(self, tela):
+    def desenhar(self, tela):        
         if self.vivo:
          tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))       
         else:
@@ -237,14 +192,16 @@ class Player:
                     tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))        
                     self.morte_frame += 1
                 else:
-                   tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))   
-            else:     
-                self.vivo = True
-                self.player.x = posXInicial
-                self.player.y = posYInicial
-                tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98)) 
-                self.morte_frame = 0
-
+                   tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))                   
+            else: 
+                if vidas_player >= 1:
+                    self.vivo = True
+                    self.player.x = posXInicial
+                    self.player.y = posYInicial
+                    tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98)) 
+                    self.morte_frame = 0                    
+                    
+               
 class Inimigo:
     def __init__(self, x, y, velocidade=0.1):
         self.x = x
@@ -347,16 +304,15 @@ class Inimigo:
             if self.morte_frame < 10:
                 if agora - self.ultimo_frame_morte > self.intervalo_morte:                    
                     self.ultimo_frame_morte = agora       
-                    tela.blit(self.spritesInimigo, (self.morte_frame * self.tamanho, 0), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+                    tela.blit(self.spritesInimigo, (self.x * self.tamanho, self.y * self.tamanho), (int(self.morte_frame * 64), 0, 64, 64))
                     self.morte_frame += 1
                 else:
-                    tela.blit(self.spritesInimigo, (self.morte_frame * self.tamanho, 0), (int(self.posX_sprites*64), self.posY_sprites, 64, 64))
+                    tela.blit(self.spritesInimigo, (self.x * self.tamanho, self.y * self.tamanho), (int(self.morte_frame * 64), 0, 64, 64))
             else:
                 self.morte_frame = 0
         
         
-class Bomb:
-    
+class Bomb:    
     # Atribuindo imagens da bomba e explosões    
     bomb_img = pygame.image.load("imagens/bomba.png")
     bomb_img = pygame.transform.scale(bomb_img, (tamanho_bloco, tamanho_bloco)) 
@@ -370,7 +326,7 @@ class Bomb:
         self.posY_bomba = y
         self.fase = fase
         self.explosoes = []
-        self.atravessavel = True
+        self.atravessavel = True        
 #         teste
         self.blocos = []
         
@@ -411,23 +367,40 @@ class Bomb:
         
         # MORTE DO PLAYER E INIMIGO PELAS EXPLOSÕES        
         if (jogador_x, jogador_y) in self.explosoes:
-            self.fase.player.vivo = False    
+            self.fase.player.vivo = False
             global vidas_player
             vidas_player -= 1 
 
         for inimigo in self.fase.inimigos:
             if (inimigo.x, inimigo.y) in self.explosoes:
                 inimigo.vivo = False
+                global pontos
+                pontos += 50
 
         #após a explosão, liberamos o recurso do semáforo e permitimos que outra bomba seja colocada 
-        limite_bombas.release() 
+        self.fase.limite_bombas.release()
+        # limite_bombas.release() 
         time.sleep(0.5)
         self.fase.bombas.remove(self)  
-                  
+
+class Porta:
+    def __init__(self, imagem, pos):
+        self.imagem = pygame.image.load(imagem)
+        self.pos = pos
+        self.aberta = False
+        self.portinha = pygame.Rect(self.pos[0], self.pos[1], tamanho_bloco, tamanho_bloco)
+             
+    def abrir(self, imagem_aberta):
+        self.imagem = pygame.image.load(imagem_aberta)
+        self.aberta = True
+    
+    def desenhar(self, tela):
+        tela.blit(self.imagem, self.pos)                
         
 
 class Fases:
-    def __init__(self, mapa, cor_fundo, musica):
+    def __init__(self, mapa, cor_fundo, musica, qtd_bombas, qtd_inimigos, tempo_limite=180):
+        
         self.mapa_layout = mapa
         self.mapa = Mapa(self.mapa_layout, tamanho_bloco)
         self.player = Player(posXInicial, posYInicial, largura_player, altura_player, 'imagens/Sprites_player.png', True)
@@ -436,11 +409,27 @@ class Fases:
         self.cor_fundo = cor_fundo
         self.inimigos = [
             Inimigo(5, 5),
-            Inimigo(5, 7),
-            Inimigo(10, 5),
+            # Inimigo(5, 7),
+            # Inimigo(10, 5),
         ]
-        self.bombas = []
+        # tempo Partida
+        self.tempo_limite = tempo_limite
+        self.tempo_inicial = pygame.time.get_ticks() # identifica quanod a fase começou
         
+        self.quantidade_bombas = qtd_bombas
+        self.limite_bombas = threading.Semaphore(self.quantidade_bombas)
+        self.quantidade_inimigos = qtd_inimigos
+        Bomb
+        self.bombas = []
+        self.fimjogo = Fim_jogo
+        self.porta = Porta("imagens/pcerta-1.png.png", (1110, 29)) 
+
+        if self.todos_mortos():
+         self.porta.abrir ("imagens/pcerta-2.png.png", (1110, 29))
+        
+
+    def todos_mortos(self):
+        return all(not inimigo.vivo for inimigo in self.inimigos)    
 
     def verificarColisaoEntrePlayerOuInimigos(self):
         #usando if para ignorar o verificarColisão enquanto o player estiver morto, evitando a perda de vidas durante a animação de morte do player
@@ -458,16 +447,15 @@ class Fases:
                 
                
 
-    def colocar_bomba(self,grupo_bombas):
+    def colocar_bomba(self,grupo_bombas):                        
         if self.player.vivo:
             grid_x = self.player.player.x // tamanho_bloco
             grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
             if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
                 #condição para adquirir um recurso do semáforo. Quando todos forem utilizados, o acquire com "blocking=False" retorna o False imediatamente para o IF, evitando que o jogo fique esperando uma nova vaga surgir(o que faria o jogo travar)
-                if limite_bombas.acquire(blocking=False):
+                if self.limite_bombas.acquire(blocking=False):
                     bomba = Bomb(grid_x, grid_y, self)
-                    self.bombas.append(bomba) 
-                    
+                    self.bombas.append(bomba)                     
                     #ao ativar a bomba, a thread é criada para aquela bomba
                     thBomba=threading.Thread(target=bomba.explodir)
                     #guardando aqui as bomba criada
@@ -480,6 +468,10 @@ class Fases:
             if inimigo.vivo and self.player.vivo:
                 inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
+
+        if self.todos_mortos() and not self.porta.aberta:
+         self.porta.abrir("imagens/pcerta-2.png.png")
+
         if teclas[pygame.K_SPACE]:
            self.colocar_bomba(grupo_bombas)
         for bomba in self.bombas:
@@ -503,7 +495,8 @@ class Fases:
     def desenhar(self, tela):
         tela.fill(self.cor_fundo)
         self.mapa.desenhar(tela)
-        self.player.desenhar(tela)
+        if self.player.vivo:
+            self.player.desenhar(tela)            
         
         for bomba in self.bombas:
             tela.blit(Bomb.bomb_img, (bomba.posX_bomba * tamanho_bloco, bomba.posY_bomba * tamanho_bloco))
@@ -513,26 +506,130 @@ class Fases:
         for inimigo in self.inimigos:
             if inimigo.vivo:
                 inimigo.desenhar(tela)
+            
+        self.porta.desenhar(tela) 
+        for inimigo in self.inimigos:
+            if self.todos_mortos():
+             self.porta.abrir("imagens/pcerta-2.png.png")
                 
-    #ef mostrarVidas(tela):
-        
-                
+    def verificar_tempoRestante(self):
+        tempo_atual = pygame.time.get_ticks()
+        tempo_percorrido = (tempo_atual  - self.tempo_inicial) / 1000
+        return max(0, self.tempo_limite - tempo_percorrido)            
 
+class Telas:
+    def __init__(self, tela):
+        self.tela = tela
+
+    def telaMorte(self):                                    
+            self.tela.fill((0, 0, 0))  # tela preta
+            fonte = pygame.font.SysFont('Arial', 80)
+            texto = fonte.render('Você morreu!', True, (255, 0, 0))  # vermelho
+            ret_texto = texto.get_rect(center=(self.tela.get_width()//2, self.tela.get_height()//2))
+            self.tela.blit(texto, ret_texto)
+            pygame.display.flip()
+            pygame.time.delay(3000)  # pausa 3 segundos
+            
+
+    def telaDerrota(self):
+        fonte = pygame.font.SysFont('Arial', 80)
+        texto = fonte.render('Você perdeu!', True, (255, 0, 0))
+        self.tela.fill((0, 0, 0))
+        pos_x = (self.tela.get_width() - texto.get_width()) // 2
+        pos_y = (self.tela.get_height() - texto.get_height()) // 2
+        self.tela.blit(texto, (pos_x, pos_y))
+        pygame.display.flip()
+        pygame.time.delay(3000)
+
+    def telaDeLoading(self):
+        self.tela.fill((0, 0, 0))
+        fonte = pygame.font.SysFont('Arial', 50)
+        texto = fonte.render('Carregando...', True, (255, 255, 255))
+        pos_x = (self.tela.get_width() - texto.get_width()) // 2
+        pos_y = (self.tela.get_height() - texto.get_height()) // 2
+        self.tela.blit(texto, (pos_x, pos_y))
+        pygame.display.flip()
+        pygame.time.delay(3000)
+
+    def telaContinuar(self):
+        fonte = pygame.font.SysFont('Arial', 30)
+        texto1 = fonte.render('Deseja continuar?', True, (255, 255, 255))
+        texto2 = fonte.render('Pressione ENTER para continuar ou ESC para sair.', True, (255, 255, 255))
+
+        while True:
+            self.tela.fill((0, 0, 0))
+            pos1_x = (self.tela.get_width() - texto1.get_width()) // 2
+            pos1_y = self.tela.get_height() // 2 - 40
+            pos2_x = (self.tela.get_width() - texto2.get_width()) // 2
+            pos2_y = self.tela.get_height() // 2 + 10
+
+            self.tela.blit(texto1, (pos1_x, pos1_y))
+            self.tela.blit(texto2, (pos2_x, pos2_y))
+            pygame.display.flip()
+
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_RETURN:
+                        return True
+                    elif evento.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        exit()
+
+class Fim_jogo:
+    def __init__(self,  lframes, fpos, inframes,  musica):
+        self.cor_fundo = PRETO
+        self.lframes = [pygame.image.load(arframes) for arframes in lframes]
+        self.fpos = fpos
+        self.inframes = inframes
+        self.musica = musica
+        self.musicaBomba = False
+        self.cframe = 0 
+        self.ftempo = 0
+        
+
+    def iniciarMusicaMano(self):
+        if not self.musicaBomba:
+            pygame.mixer.music.load(self.musica)
+            pygame.mixer.music.play(-1)
+            self.musicaBomba = True
+            
+    def atual(self):
+        self.ftempo += 1
+        if self.ftempo >= self.inframes:
+            self.cframe = (self.cframe + 1) % len(self.lframes)
+            self.ftempo = 0
+
+    def desenhar(self, tela):
+        tela.fill(self.cor_fundo)
+        tela.blit(self.lframes[self.cframe], self.fpos)
+       
+frame_bacana = [
+            "imagens/fr1-1.png.png",
+            "imagens/fr1-2.png.png",
+            "imagens/fr1-3.png.png",
+            "imagens/fr1-4.png.png",
+            "imagens/fr1-5.png.png",
+            "imagens/fr1-6.png.png",
+            "imagens/fr1-7.png.png"
+        ]
 
 # ===================================================
 menu = Menu(BRANCO, 'imagens/logoBao.png', 'Clique ENTER para iniciar o jogo', 'sons/musica_telaInicial.mp3')
-fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3')
-
+fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3', 1, 3)
+gif = Fim_jogo(frame_bacana, (10, 0), inframes=2, musica="sons/bombermusica.mp3")
 estado = "menu"
 menuMusicaTocando = False
+telas = Telas(tela)
 
-
-
-
-
-rodando = True
+pygame.font.init()
+acabou_tempo = False
+rodando = True  
 while rodando:
-    
+    iniciar_tempo = pygame.time.get_ticks()
+
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             pygame.quit()
@@ -541,41 +638,104 @@ while rodando:
             if evento.key == pygame.K_ESCAPE:
                 pygame.quit()
                 exit()
-                
+
         if evento.type == pygame.KEYDOWN and estado == "menu":
             if evento.key == pygame.K_RETURN:
                 estado = "jogo"
                 pygame.mixer.music.stop()
-                
-            
-            
-    teclas = pygame.key.get_pressed()     
 
+    teclas = pygame.key.get_pressed()          
+
+    #   ESTATÍSTICAS:
+    #vida
     fonteText = pygame.font.SysFont('Arial', 40)
     vidas = f'Vidas: {vidas_player}'  
     vidasFormatado= fonteText.render(vidas, True, BRANCO)
-    tempo = fonteText.render(datetime.timedelta(seconds=tempo_partida),True,BRANCO)
-    
+    #tempo    
+    tempo_fase1 = fase1.verificar_tempoRestante()
+    minutos, segundos = divmod(tempo_fase1, 60)
+    tempo = '{:0.0f}:{:0.0f}'.format(minutos, segundos)
+    tempo = str (tempo)
+    tempoFormatado = fonteText.render(tempo, True, BRANCO)
+    # pontuação
+    pontos_player=f'Pontuação: {pontos}' 
+    pontosFormatado= fonteText.render(pontos_player, True, BRANCO)
 
-    pygame.font.init()         
     if estado == "menu":
-        menu.desenhar(tela)        
+        menu.desenhar(tela)
         if not menuMusicaTocando:
-             pygame.mixer.music.load(menu.musica)
-             pygame.mixer.music.play(-1)
-             menuMusicaTocando = True
-    elif estado == "jogo":     
-        tela.blit(tempo,(350,40))   
+            pygame.mixer.music.load(menu.musica)
+            pygame.mixer.music.play(-1)
+            menuMusicaTocando = True
+
+    elif estado == "jogo":
         menuMusicaTocando = False
         fase1.atualizar(teclas)
         fase1.desenhar(tela)
         fase1.iniciarMusicaFase()
         tela.blit(vidasFormatado, (950,40))
+        tela.blit(tempoFormatado,(500,40))
+        tela.blit(pontosFormatado,(150,40))
+
+        tela.blit(vidasFormatado, (950,40))
+    # FIM DO JOGO        
+    elif estado == "fim":
+        gif.atual()
+        gif.desenhar(tela)
+
+    if fase1.porta.aberta and fase1.player.metadePlayer.colliderect(fase1.porta.portinha):
+     if estado != "fim":  # para evitar repetir
+        estado = "fim"
+        pygame.mixer.music.stop()
+        gif.iniciarMusicaMano()
+
+        tela.blit(vidasFormatado, (950, 40))
         
-        
-        
-        
-    relogio.tick(FPS)    
+    #  Precisa corrigir
+        if fase1.player.metadePlayer.colliderect(fase1.abrir.portinha):
+            estado = "fim"
+            pygame.mixer.music.stop()
+            gif.iniciarMusicaMano()
+    #########################  
+# VERIFICA SE O TEMPO ACABOU
+    if tempo_fase1 <= 0:
+       vidas_player = 0        
+       acabou_tempo = True     
+              
+    if not fase1.player.vivo or acabou_tempo:             
+        pygame.mixer.music.pause()        
+        telas.telaMorte()       
+
+        if fase1.player is not None:
+           fase1.desenhar(tela)
+           fase1.iniciarMusicaFase()
+           tela.blit(vidasFormatado, (950,40))
+                        
+        relogio.tick(FPS)    
+        if vidas_player <= 0:
+            telas.telaDeLoading()
+            telas.telaDerrota()
+            if telas.telaContinuar():
+                telas.telaDeLoading()
+                vidas_player = 3                
+                fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3', 1, 3)
+                estado = "jogo"
+                pygame.mixer.music.play(-1)
+            else:
+                pygame.quit()
+                exit()
+        else:
+            pygame.mixer.music.unpause()            
+            fase1 = Fases(mapa1, cor_fundoFase, 'sons/musica_jogatina.mp3', 1, 3)
+            fase1.desenhar(tela)
+            fase1.iniciarMusicaFase()
+            tela.blit(vidasFormatado, (950, 40))    
+
+    elif estado == "fim":
+        gif.atual()
+        gif.desenhar(tela)
+
+    relogio.tick(FPS)
     pygame.display.flip()
-        
-pygame.quit()      
+
+pygame.quit()
