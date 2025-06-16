@@ -788,7 +788,7 @@ while rodando:
     elif fase.porta.aberta and fase.player.metadePlayer.colliderect(fase.porta.portinha) and fase.fase_atual == 2:
      if estado != "fim":  # para evitar repetir     
             pontos_fase2 = pontos_fase1 + pontos  
-            fase = Fases(mapa3, AMARELO, 'sons/musica_jogatina.mp3', 3, 3, 3)            
+            fase = Fases(mapa3, CINZA_ESCURO, 'sons/musica_jogatina.mp3', 3, 3, 3)            
     elif fase.porta.aberta and fase.player.metadePlayer.colliderect(fase.porta.portinha) and fase.fase_atual == 3:
         estado = "fim"
         
@@ -853,7 +853,7 @@ while rodando:
                 elif fase.fase_atual == 3:
                     pontos = 0
                     pontos = pontos_fase2
-                    fase = Fases(mapa3, AMARELO, 'sons/musica_jogatina.mp3', 3, 3, 3)
+                    fase = Fases(mapa3, CINZA_ESCURO, 'sons/musica_jogatina.mp3', 3, 3, 3)
                 fase.desenhar(tela)
                 fase.iniciarMusicaFase()
                 tela.blit(vidasFormatado, (950, 40))    
