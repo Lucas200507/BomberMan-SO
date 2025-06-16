@@ -210,9 +210,7 @@ class Player:
                 
      elif self.vivo:
         tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))
-     else:
-        # Jogador morto, animação não rolando
-        pass                    
+                        
                     
                
 class Inimigo:
