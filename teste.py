@@ -7,8 +7,8 @@ import datetime
 from sys import exit
 from variaveis import *
 
-grupo_bombas=[]
-pygame.init()
+grupo_bombas=[] # array para receber todas as bombas
+pygame.init() # iniciando o pygame
 
 relogio = pygame.time.Clock() # ininiando o relógio
 pygame.mixer.music.set_volume(0.5) # definindo o volume da música
@@ -79,10 +79,10 @@ class Mapa:
 
 class Player:
     def __init__(self, x, y, largura_player, altura_player, frame, vivo):        
-        self.sprites = pygame.image.load(frame)        
+        self.sprites = pygame.image.load(frame) # carregando as sprites do player        
         self.spritesMorte = pygame.image.load('imagens/sprites/morte_player.png')
-        self.spritesMorte = pygame.transform.scale(self.spritesMorte, (512, 98))
-        self.player = pygame.Rect(x, y, largura_player, altura_player)    
+        self.spritesMorte = pygame.transform.scale(self.spritesMorte, (512, 98)) # redimensionando as sprites de morte
+        self.player = pygame.Rect(x, y, largura_player, altura_player) # criando um dimensionamento para o elemento player
         # PARA RECORTAR O FRAME PLAYER
         self.x_sprites = 0
         self.y_sprites = 0
@@ -93,7 +93,8 @@ class Player:
         self.morte_frame = 0
         self.tempo_morte = 0 
         self.velocidade = velocidade_player
-        self.metadePlayer = pygame.Rect(x, y + (altura_player // 2 - 20), largura_player - 10, altura_player // 2)
+        self.metadePlayer = pygame.Rect(x, y + (altura_player // 2 - 20), largura_player - 20, altura_player // 2)
+        self.morrendo = False
         # PARA DEIXAR A ANIMAÇÃO MAIS FLUÍDA
         self.frame_atual = 0
         self.tempo_ultimo_frame = pygame.time.get_ticks()
@@ -101,6 +102,7 @@ class Player:
         
     def atualizar_animacao(self):
         agora = pygame.time.get_ticks()
+        # animação fluída
         if agora - self.tempo_ultimo_frame > self.intervalo_animacao:
             self.x_sprites += 1
             self.tempo_ultimo_frame = agora
@@ -183,27 +185,34 @@ class Player:
                 return True
         return False
         #return any(self.metadePlayer.colliderect(b.block) for b in blocos)
+    def iniciar_morte(self):
+      self.morrendo = True
+      self.vivo = False
+      self.morte_frame = 0
+      self.ultimo_frame_morte = pygame.time.get_ticks()
 
     def desenhar(self, tela):        
-        if self.vivo:
-         tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))       
+     if self.morrendo:
+        agora = pygame.time.get_ticks()
+        if self.morte_frame < 6:
+            if agora - self.ultimo_frame_morte > self.intervalo_morte:
+                self.ultimo_frame_morte = agora
+                self.morte_frame += 1
+            tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))
         else:
-            agora = pygame.time.get_ticks()
-            if self.morte_frame < 6:                 
-                # SÓ MUDA O FRAME SE PASSOU O INTERVALO
-                if agora - self.ultimo_frame_morte > self.intervalo_morte:
-                    self.ultimo_frame_morte = agora               
-                    tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))        
-                    self.morte_frame += 1
-                else:
-                   tela.blit(self.spritesMorte, self.player.topleft, (int(self.morte_frame*64), 0, 64, 98))                   
-            else: 
-                if vidas_player >= 1:
-                    self.vivo = True
-                    self.player.x = posXInicial
-                    self.player.y = posYInicial
-                    tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98)) 
-                    self.morte_frame = 0                    
+            # Animação terminou
+            self.morrendo = False
+            if vidas_player >= 1:
+                self.vivo = True
+                self.player.x = posXInicial
+                self.player.y = posYInicial
+                self.morte_frame = 0
+                
+     elif self.vivo:
+        tela.blit(self.sprites, (self.player.topleft), (int(self.x_sprites*64), self.y_sprites*98, 64, 98))
+     else:
+        # Jogador morto, animação não rolando
+        pass                    
                     
                
 class Inimigo:
@@ -325,7 +334,7 @@ class Bomb:
     explosion_img = pygame.transform.scale(explosion_img, (tamanho_bloco, tamanho_bloco))
     
     def __init__(self, x, y, fase):                
-        self.delay_bomba = 2
+        self.delay_bomba = 1.5
         self.posX_bomba = x
         self.posY_bomba = y
         self.fase = fase
@@ -377,12 +386,12 @@ class Bomb:
                                 pygame.image.load("imagens/sprites/tijolos_destruidos1.png"),
                                 (tamanho_bloco, tamanho_bloco)
                             )
-                            time.sleep(0.3)
+                            time.sleep(0.1)
                             bloco_encontrado.backgroundImg = pygame.transform.scale(
                                 pygame.image.load("imagens/sprites/tijolos_destruidos2.png"),
                                 (tamanho_bloco, tamanho_bloco)
                             )
-                            time.sleep(0.2)
+                            time.sleep(0.1)
 
                             self.fase.mapa.blocos.remove(bloco_encontrado)
                             self.fase.mapa_layout[ny][nx] = 1  # Vira chão
@@ -397,7 +406,7 @@ class Bomb:
                     self.explosoes.append((nx, ny))
 
         # Aguarda o efeito da explosão
-        time.sleep(0.5)
+        time.sleep(0.2)
 
         # Remove a bomba da lista, se ainda estiver lá
         if self in self.fase.bombas:
@@ -422,8 +431,6 @@ class Bomb:
                 global pontos
                 pontos += 50
 
-
-
 class Porta:
     def __init__(self, imagem, pos):
         self.imagem = pygame.image.load(imagem)
@@ -438,7 +445,6 @@ class Porta:
     def desenhar(self, tela):
         tela.blit(self.imagem, self.pos)                
         
-
 class Fases:
     def __init__(self, mapa, cor_fundo, musica, qtd_bombas, qtd_inimigos, fase_atual, tempo_limite=120):
         self.fase_atual = fase_atual
@@ -466,19 +472,20 @@ class Fases:
         # tempo Partida
         self.tempo_limite = tempo_limite
         self.tempo_inicial = pygame.time.get_ticks() # identifica quanod a fase começou
-        
+        # INSERINDO A QUANTIDADE MÁXIMA DE BOMBAS POR PARTIDA
         self.quantidade_bombas = qtd_bombas
-        self.limite_bombas = threading.Semaphore(self.quantidade_bombas)
+        self.limite_bombas = threading.Semaphore(self.quantidade_bombas) # semaforizando o limite de bombas disponíveis
         self.quantidade_inimigos = qtd_inimigos
-        Bomb
-        self.bombas = []
-        self.fimjogo = Fim_jogo
-        self.porta = Porta("imagens/pcerta-1.png.png", (1110, 29)) 
-
-        if self.todos_mortos():
-         self.porta.abrir ("imagens/pcerta-2.png.png", (1110, 29))
         
+        self.bombas = []
+        self.fimjogo = Fim_jogo        
+        self.porta = Porta("imagens/pcerta-1.png.png", (1110, 29)) # imagem da porta fechada
 
+
+        if self.todos_mortos(): # Verificação se todos os inimigos estão mortos
+         self.porta.abrir ("imagens/pcerta-2.png.png", (1110, 29)) # imagem da porta aberta
+        
+    # Verificação se todos os inimigos estão mortos
     def todos_mortos(self):
         return all(not inimigo.vivo for inimigo in self.inimigos)    
 
@@ -487,6 +494,7 @@ class Fases:
         if self.player.vivo == False:
             return
         
+        # verificação quando alugm inimigo colidir com o player
         for inimigo in self.inimigos:
             if inimigo.vivo and self.player.player.colliderect(
                 pygame.Rect(inimigo.x * tamanho_bloco, inimigo.y * tamanho_bloco, tamanho_bloco, tamanho_bloco)
@@ -496,8 +504,8 @@ class Fases:
                 global vidas_player
                 vidas_player -= 1 
                 
-    def colocar_bomba(self,grupo_bombas):                        
-        if self.player.vivo:
+    def colocar_bomba(self,grupo_bombas):                                
+        if self.player.vivo: # só pode colocar a bomba se estiver vivo
             grid_x = self.player.player.x // tamanho_bloco
             grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
             if not any(b.posX_bomba == grid_x and b.posY_bomba == grid_y for b in self.bombas):
@@ -517,19 +525,20 @@ class Fases:
             if inimigo.vivo and self.player.vivo:
                 inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
-        if self.todos_mortos() and not self.porta.aberta:
-            self.porta.abrir("imagens/pcerta-2.png.png")
+        if self.todos_mortos() and not self.porta.aberta: # Condição para verificar se o player passou de fase
+            self.porta.abrir("imagens/pcerta-2.png.png") 
 
-        if teclas[pygame.K_SPACE]:
+        if teclas[pygame.K_SPACE]: # ao clicar em espaço, coloca a bomba
             self.colocar_bomba(grupo_bombas)
         for bomba in self.bombas:
-            if bomba.atravessavel: 
+            if bomba.atravessavel:  # bomba estará atravessável no momento qu for colocada
                 player_grid_x = self.player.player.x // tamanho_bloco
                 player_grid_y = (self.player.player.y + altura_player // 2) // tamanho_bloco
                 if (player_grid_x, player_grid_y) != (bomba.posX_bomba, bomba.posY_bomba):                    
                     for bomba in self.bombas:
                         if bomba.atravessavel:
                             bomba_rect = bomba.pegar_dims()
+                            # caso o player saia totamente da bomba, ela não estará mais atravessável
                             if not self.player.metadePlayer.colliderect(bomba_rect):
                                 bomba.atravessavel = False  
                              
@@ -562,21 +571,49 @@ class Fases:
                 
     def verificar_tempoRestante(self):
         tempo_atual = pygame.time.get_ticks()
-        tempo_percorrido = (tempo_atual  - self.tempo_inicial) / 1000
+        tempo_percorrido = (tempo_atual  - self.tempo_inicial) / 1000 
         return max(0, self.tempo_limite - tempo_percorrido)            
 
 class Telas:
     def __init__(self, tela):
         self.tela = tela
 
-    def telaMorte(self):                                    
-            self.tela.fill((0, 0, 0))  # tela preta
-            fonte = pygame.font.SysFont('Arial', 80)
-            texto = fonte.render('Você morreu!', True, VERMELHO)  # vermelho
-            ret_texto = texto.get_rect(center=(self.tela.get_width()//2, self.tela.get_height()//2))
-            self.tela.blit(texto, ret_texto)
+    def telaMorte(self, fase):
+        relogio = pygame.time.Clock()
+        fonte = pygame.font.SysFont('Arial', 80)
+        texto = fonte.render('Você morreu!', True, VERMELHO)
+        ret_texto = texto.get_rect(center=(self.tela.get_width() // 2, self.tela.get_height() // 2))
+
+  
+        if not fase.player.morrendo:
+             fase.player.iniciar_morte()
+
+    
+        tempo_inicio = pygame.time.get_ticks()
+        while pygame.time.get_ticks() - tempo_inicio < 990:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+            self.tela.fill((0, 0, 0))
+            fase.desenhar(self.tela)
+            fase.player.desenhar(self.tela)
             pygame.display.flip()
-            pygame.time.delay(3000)  # pausa 3 segundos
+            relogio.tick(60)
+
+    
+        tempo_msg = pygame.time.get_ticks()
+        while pygame.time.get_ticks() - tempo_msg < 1500:
+             for evento in pygame.event.get():
+                 if evento.type == pygame.QUIT:
+                     pygame.quit()
+                     exit()
+
+             self.tela.fill((0, 0, 0))
+             self.tela.blit(texto, ret_texto)
+             pygame.display.flip()
+             relogio.tick(60)
             
     def telaAcabouTempo(self):                                    
             self.tela.fill((0, 0, 0))  # tela preta
@@ -751,7 +788,7 @@ while rodando:
     elif fase.porta.aberta and fase.player.metadePlayer.colliderect(fase.porta.portinha) and fase.fase_atual == 2:
      if estado != "fim":  # para evitar repetir     
             pontos_fase2 = pontos_fase1 + pontos  
-            fase = Fases(mapa3, AMARELO, 'sons/musica_jogatina.mp3', 3, 3, 3)            
+            fase = Fases(mapa3, CINZA_ESCURO, 'sons/musica_jogatina.mp3', 3, 3, 3)            
     elif fase.porta.aberta and fase.player.metadePlayer.colliderect(fase.porta.portinha) and fase.fase_atual == 3:
         estado = "fim"
         
@@ -774,9 +811,12 @@ while rodando:
             exit()
     else:
         # VERIFICA QUANOO O PLAYER MORREU          
-        if not fase.player.vivo:                         
-            pygame.mixer.music.pause()        
-            telas.telaMorte()                       
+        if fase.player.morrendo:
+            fase.desenhar(tela) 
+            fase.player.desenhar(tela) 
+        elif not fase.player.vivo:
+            pygame.mixer.music.pause()
+            telas.telaMorte(fase)                      
                                     
             if fase.player is not None:                    
                 fase.desenhar(tela)
@@ -813,7 +853,7 @@ while rodando:
                 elif fase.fase_atual == 3:
                     pontos = 0
                     pontos = pontos_fase2
-                    fase = Fases(mapa3, AMARELO, 'sons/musica_jogatina.mp3', 3, 3, 3)
+                    fase = Fases(mapa3, CINZA_ESCURO, 'sons/musica_jogatina.mp3', 3, 3, 3)
                 fase.desenhar(tela)
                 fase.iniciarMusicaFase()
                 tela.blit(vidasFormatado, (950, 40))    
