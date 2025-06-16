@@ -386,12 +386,12 @@ class Bomb:
                                 pygame.image.load("imagens/sprites/tijolos_destruidos1.png"),
                                 (tamanho_bloco, tamanho_bloco)
                             )
-                            time.sleep(0.3)
+                            time.sleep(0.1)
                             bloco_encontrado.backgroundImg = pygame.transform.scale(
                                 pygame.image.load("imagens/sprites/tijolos_destruidos2.png"),
                                 (tamanho_bloco, tamanho_bloco)
                             )
-                            time.sleep(0.2)
+                            time.sleep(0.1)
 
                             self.fase.mapa.blocos.remove(bloco_encontrado)
                             self.fase.mapa_layout[ny][nx] = 1  # Vira chão
@@ -406,7 +406,7 @@ class Bomb:
                     self.explosoes.append((nx, ny))
 
         # Aguarda o efeito da explosão
-        time.sleep(0.3)
+        time.sleep(0.2)
 
         # Remove a bomba da lista, se ainda estiver lá
         if self in self.fase.bombas:
