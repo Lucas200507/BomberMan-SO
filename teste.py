@@ -338,89 +338,89 @@ class Bomb:
     def pegar_dims(self):
         return pygame.Rect(self.posX_bomba * tamanho_bloco, self.posY_bomba * tamanho_bloco, tamanho_bloco, tamanho_bloco)
             
-def explodir(self):
-    time.sleep(self.delay_bomba)
-    self.explosoes.append((self.posX_bomba, self.posY_bomba))
+    def explodir(self):
+        time.sleep(self.delay_bomba)
+        self.explosoes.append((self.posX_bomba, self.posY_bomba))
 
-    # Direções da explosão (direita, esquerda, baixo, cima)
-    direcoes = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    
-    for dx, dy in direcoes:
-        for i in range(1, raio_da_bomba + 1):
-            nx = self.posX_bomba + dx * i
-            ny = self.posY_bomba + dy * i
+        # Direções da explosão (direita, esquerda, baixo, cima)
+        direcoes = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        
+        for dx, dy in direcoes:
+            for i in range(1, raio_da_bomba + 1):
+                nx = self.posX_bomba + dx * i
+                ny = self.posY_bomba + dy * i
 
-            # Verifica se a posição está dentro dos limites do mapa
-            if ny < 0 or ny >= len(self.fase.mapa_layout) or nx < 0 or nx >= len(self.fase.mapa_layout[0]):
-                break
+                # Verifica se a posição está dentro dos limites do mapa
+                if ny < 0 or ny >= len(self.fase.mapa_layout) or nx < 0 or nx >= len(self.fase.mapa_layout[0]):
+                    break
 
-            tile = self.fase.mapa_layout[ny][nx]
+                tile = self.fase.mapa_layout[ny][nx]
 
-            # Interrompe a explosão se for uma parede sólida
-            if tile == 3 or tile == 4:
-                break
+                # Interrompe a explosão se for uma parede sólida
+                if tile == 3 or tile == 4:
+                    break
 
-            # Bloco destrutível
-            elif tile == 2:
-                self.explosoes.append((nx, ny))
-                bloco_encontrado = None
+                # Bloco destrutível
+                elif tile == 2:
+                    self.explosoes.append((nx, ny))
+                    bloco_encontrado = None
 
-                # Encontra o bloco na lista e aplica animação de destruição
-                for bloco in self.fase.mapa.blocos:
-                    if bloco.block.x == nx * tamanho_bloco and bloco.block.y == ny * tamanho_bloco:
-                        bloco_encontrado = bloco
-                        break
+                    # Encontra o bloco na lista e aplica animação de destruição
+                    for bloco in self.fase.mapa.blocos:
+                        if bloco.block.x == nx * tamanho_bloco and bloco.block.y == ny * tamanho_bloco:
+                            bloco_encontrado = bloco
+                            break
 
-                if bloco_encontrado:
-                    try:
-                        bloco_encontrado.backgroundImg = pygame.transform.scale(
-                            pygame.image.load("imagens/sprites/tijolos_destruidos1.png"),
-                            (tamanho_bloco, tamanho_bloco)
-                        )
-                        time.sleep(0.3)
-                        bloco_encontrado.backgroundImg = pygame.transform.scale(
-                            pygame.image.load("imagens/sprites/tijolos_destruidos2.png"),
-                            (tamanho_bloco, tamanho_bloco)
-                        )
-                        time.sleep(0.2)
+                    if bloco_encontrado:
+                        try:
+                            bloco_encontrado.backgroundImg = pygame.transform.scale(
+                                pygame.image.load("imagens/sprites/tijolos_destruidos1.png"),
+                                (tamanho_bloco, tamanho_bloco)
+                            )
+                            time.sleep(0.3)
+                            bloco_encontrado.backgroundImg = pygame.transform.scale(
+                                pygame.image.load("imagens/sprites/tijolos_destruidos2.png"),
+                                (tamanho_bloco, tamanho_bloco)
+                            )
+                            time.sleep(0.2)
 
-                        self.fase.mapa.blocos.remove(bloco_encontrado)
-                        self.fase.mapa_layout[ny][nx] = 1  # Vira chão
+                            self.fase.mapa.blocos.remove(bloco_encontrado)
+                            self.fase.mapa_layout[ny][nx] = 1  # Vira chão
 
-                    except ValueError:
-                        pass  # Impede da bomba bugar ao destruir bloco, pois já pode ter sido removido por outra bomba
+                        except ValueError:
+                            pass  # Impede da bomba bugar ao destruir bloco, pois já pode ter sido removido por outra bomba
 
-                break  # Interrompe a propagação da explosão nessa direção
+                    break  # Interrompe a propagação da explosão nessa direção
 
-            # Espaço livre (chão)
-            else:
-                self.explosoes.append((nx, ny))
+                # Espaço livre (chão)
+                else:
+                    self.explosoes.append((nx, ny))
 
-    # Aguarda o efeito da explosão
-    time.sleep(0.5)
+        # Aguarda o efeito da explosão
+        time.sleep(0.5)
 
-    # Remove a bomba da lista, se ainda estiver lá
-    if self in self.fase.bombas:
-        self.fase.bombas.remove(self)
+        # Remove a bomba da lista, se ainda estiver lá
+        if self in self.fase.bombas:
+            self.fase.bombas.remove(self)
 
-    # Libera o uso de uma nova bomba
-    self.fase.limite_bombas.release()
+        # Libera o uso de uma nova bomba
+        self.fase.limite_bombas.release()
 
-    # Verifica colisão com o jogador
-    jogador_x = self.fase.player.player.x // tamanho_bloco
-    jogador_y = (self.fase.player.player.y + altura_player // 2) // tamanho_bloco
+        # Verifica colisão com o jogador
+        jogador_x = self.fase.player.player.x // tamanho_bloco
+        jogador_y = (self.fase.player.player.y + altura_player // 2) // tamanho_bloco
 
-    if (jogador_x, jogador_y) in self.explosoes:
-        self.fase.player.vivo = False
-        global vidas_player
-        vidas_player -= 1
+        if (jogador_x, jogador_y) in self.explosoes:
+            self.fase.player.vivo = False
+            global vidas_player
+            vidas_player -= 1
 
-    # Verifica colisão com inimigos
-    for inimigo in self.fase.inimigos:
-        if (inimigo.x, inimigo.y) in self.explosoes:
-            inimigo.vivo = False
-            global pontos
-            pontos += 50
+        # Verifica colisão com inimigos
+        for inimigo in self.fase.inimigos:
+            if (inimigo.x, inimigo.y) in self.explosoes:
+                inimigo.vivo = False
+                global pontos
+                pontos += 50
 
 
 
@@ -517,12 +517,11 @@ class Fases:
             if inimigo.vivo and self.player.vivo:
                 inimigo.mover(self.mapa_layout, self)
         self.verificarColisaoEntrePlayerOuInimigos()
-
         if self.todos_mortos() and not self.porta.aberta:
-         self.porta.abrir("imagens/pcerta-2.png.png")
+            self.porta.abrir("imagens/pcerta-2.png.png")
 
         if teclas[pygame.K_SPACE]:
-           self.colocar_bomba(grupo_bombas)
+            self.colocar_bomba(grupo_bombas)
         for bomba in self.bombas:
             if bomba.atravessavel: 
                 player_grid_x = self.player.player.x // tamanho_bloco
